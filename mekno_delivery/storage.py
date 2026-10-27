@@ -5,7 +5,7 @@ writers, including separate processes. Quote terms are snapshotted unchanged.
 """
 import json
 import sqlite3
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from dataclasses import asdict
 from pathlib import Path
 from norin_delivery.storage import StorageError
@@ -22,7 +22,7 @@ class DeliveryRepository:
         self.path = Path(path)
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            with sqlite3.connect(self.path) as db:
+            with closing(sqlite3.connect(self.path)) as db, db:
                 version = db.execute('PRAGMA user_version').fetchone()[0]
                 if version not in (0, 1):
                     raise StorageError('Unsupported delivery database version.')
@@ -37,7 +37,7 @@ class DeliveryRepository:
     @contextmanager
     def transaction(self):
         try:
-            with sqlite3.connect(self.path, timeout=10) as db:
+            with closing(sqlite3.connect(self.path, timeout=10)) as db, db:
                 db.execute('BEGIN IMMEDIATE')
                 yield db
         except sqlite3.Error as exc:

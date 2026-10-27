@@ -258,6 +258,8 @@ class WebHandler(BaseHTTPRequestHandler):
         elif path == "/api/requests/save":
             app.save_draft(field("request_id"), field("pickup"), field("destination"),
                            parcel_fields(data))
+        elif path == "/api/requests/submit":
+            app.submit_request(field("request_id"))
         elif path == "/api/quotes":
             app.create_quote(field("request_id"), field("cost"),
                              field("pickup_time").replace("T", " "),

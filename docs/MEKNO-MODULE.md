@@ -31,7 +31,8 @@ in the integrated workspace. Existing real customer files were not used in tests
    uses `2026-11-01 08:00 / 2026-11-01 18:00`.
 3. In **Team accounts**, create delivery-staff accounts using the staff IDs
    displayed in the directory. Unknown/inactive IDs are rejected.
-4. Add a phone customer, request with parcels, and a quote; accept the quote.
+4. Add a phone customer and request with parcels. Submit the request, then
+   prepare a quote and record the customer's acceptance.
 5. Open **Deliveries**, assign the job to the first driver, then reassign to
    the second with a reason. **Details** shows both allocation records.
 6. Demonstrate rejection of overlapping jobs or staff outside their shifts.

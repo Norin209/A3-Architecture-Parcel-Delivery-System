@@ -22,6 +22,8 @@ The interface includes a dashboard, searchable/filterable request and quote
 tables, request forms with editable parcel rows, quote review/decision dialogs,
 customer contact forms, and manager account controls. Menus follow the signed-in
 role. Draft forms save as one operation, and errors keep entered values visible.
+Customers submit complete drafts for quotation. Staff can issue a quote only
+after submission; the customer then accepts or rejects it.
 
 First use asks you to create the initial manager. Existing console accounts
 and `data/records.json` work in the UI as well. Do not run the console and web
@@ -94,8 +96,10 @@ than deleting a file containing useful work.
    enter pickup/destination addresses and confirm.
 3. Choose **3 Edit draft** to add two parcels. Try a blank description,
    then a valid one. Edit a parcel, remove one, or change the locations.
-   Removing the last parcel is allowed in a draft but blocks quotation.
-4. Sign out. Sign in as manager or office staff. Choose **8 Prepare quote**.
+   Removing the last parcel is allowed in a draft but blocks submission.
+4. Choose **11 Submit request for quote**. The request becomes Submitted and
+   can no longer be edited. Sign out, then sign in as manager or office staff
+   and choose **8 Prepare quote**.
    Try a negative cost or delivery time before pickup, then correct them.
    Example: `45.50`, `2026-11-01 09:00`, `2026-11-01 11:00`.
 5. Sign in as the customer, choose **4 Quotes** to review, then **5 Accept/reject
@@ -184,8 +188,9 @@ including empty screens, correct/incorrect input, edits and final results.
 - Names and parcel descriptions cannot be blank. At least a phone or email
   is required; supplied contacts receive basic format checks. These do not
   verify that the contact belongs to the person.
-- A draft may have empty locations/no parcels. A quote requires complete
-  locations and at least one parcel. Only one quote per request is supported;
+- A draft may have empty locations/no parcels. Submission requires complete
+  locations and at least one parcel. Only submitted requests can be quoted.
+  Only one quote per request is supported;
   quote revision and cancellation after acceptance are outside this module.
 - Username uniqueness is case-insensitive. Passwords use individually salted
   PBKDF2-SHA256 with 600000 iterations. Authority is checked on every saved

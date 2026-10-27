@@ -56,9 +56,12 @@ class Records:
                 if parcel.parcel_id in parcel_ids:
                     raise ValueError("Parcel belongs to more than one request")
                 parcel_ids.add(parcel.parcel_id)
-            if request.state == RequestState.DRAFT:
+            if request.state in (RequestState.DRAFT, RequestState.SUBMITTED):
                 if request.quote_id:
-                    raise ValueError("Draft has a quote")
+                    raise ValueError("Unquoted request has a quote")
+                if (request.state == RequestState.SUBMITTED
+                        and request.validate_for_quote()):
+                    raise ValueError("Submitted request is incomplete")
             else:
                 quote = self.quotes.get(request.quote_id)
                 if not quote or quote.request_id != request.request_id:

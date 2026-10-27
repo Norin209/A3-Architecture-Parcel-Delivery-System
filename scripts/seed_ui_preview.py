@@ -36,6 +36,7 @@ def main():
     for index, (customer, pickup, destination, parcel, decision) in enumerate(examples):
         request = app.create_request(customer.customer_id, pickup, destination, [parcel])
         if decision != "Draft":
+            app.submit_request(request.request_id)
             quote = app.create_quote(request.request_id, str(35 + index * 12) + ".50",
                                      "2026-11-01 09:00", "2026-11-01 11:00")
             if decision in ("Accepted", "Rejected"):

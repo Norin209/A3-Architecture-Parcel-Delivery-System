@@ -36,6 +36,7 @@ def main() -> None:
         "3", "1", "3", "2", "Clothes - fragile",
         "3", "1", "4", "2", "y",
         "1",
+        "11", "1", "y",
         "0",
         "2", "manager", password,
         "8", "1", "0", pickup, delivery, "y",

@@ -197,6 +197,14 @@ class DeliveryApplication:
         self.repository.commit(records)
         return updated
 
+    def submit_request(self, request_id: str) -> DeliveryRequest:
+        request = self.get_request(request_id)
+        submitted = request.submit()
+        records = deepcopy(self.repository.records)
+        records.requests[request_id] = submitted
+        self.repository.commit(records)
+        return submitted
+
     def create_quote(self, request_id: str, cost: str, pickup_time: str,
                      delivery_time: str) -> DeliveryQuote:
         request = self.get_request(request_id)

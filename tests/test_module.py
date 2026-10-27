@@ -74,6 +74,7 @@ class ModuleTests(unittest.TestCase):
 
     def quote(self):
         request = self.request()
+        self.app.submit_request(request.request_id)
         self.app.login("office", PASSWORD)
         return self.app.create_quote(
             request.request_id, "45.50", "2026-11-01 09:00", "2026-11-01 11:00",
@@ -113,6 +114,7 @@ class ModuleTests(unittest.TestCase):
         customer = self.app.create_phone_customer("Phone Customer", "0398765432", "")
         request = self.app.create_request(customer.customer_id, "Pickup", "Destination")
         self.app.edit_request(request.request_id, "add", "Box")
+        self.app.submit_request(request.request_id)
         quote = self.app.create_quote(
             request.request_id, "10", "2026-11-01 09:00", "2026-11-01 10:00",
         )
@@ -140,6 +142,30 @@ class ModuleTests(unittest.TestCase):
                 request.request_id, "10", "2026-11-01 09:00", "2026-11-01 10:00",
             )
 
+    def test_submission_is_required_and_locks_the_request(self):
+        request = self.request()
+        self.app.login("office", PASSWORD)
+        with self.assertRaisesRegex(DomainError, "submit"):
+            self.app.create_quote(
+                request.request_id, "10", "2026-11-01 09:00", "2026-11-01 10:00",
+            )
+        self.app.login("norin", PASSWORD)
+        submitted = self.app.submit_request(request.request_id)
+        self.assertEqual(submitted.state, RequestState.SUBMITTED)
+        with self.assertRaises(DomainError):
+            self.app.edit_request(request.request_id, "locations", "Changed", "Elsewhere")
+        with self.assertRaises(DomainError):
+            self.app.submit_request(request.request_id)
+        self.app.login("other", PASSWORD)
+        with self.assertRaises(DomainError):
+            self.app.submit_request(request.request_id)
+        self.app = DeliveryApplication(JsonRepository(self.path), self.gateway)
+        self.app.login("office", PASSWORD)
+        self.assertEqual(self.app.get_request(request.request_id).state,
+                         RequestState.SUBMITTED)
+        self.app.create_quote(request.request_id, "10", "2026-11-01 09:00",
+                              "2026-11-01 10:00")
+
     def test_draft_editing_and_last_parcel_removal(self):
         request = self.request()
         request = self.app.edit_request(request.request_id, "add", "Clothes")
@@ -151,6 +177,8 @@ class ModuleTests(unittest.TestCase):
         self.app.edit_request(request.request_id, "locations", "", "")
         updated = self.app.get_request(request.request_id)
         self.assertEqual(len(updated.validate_for_quote()), 3)
+        with self.assertRaises(DomainError):
+            self.app.submit_request(request.request_id)
         self.app.login("office", PASSWORD)
         with self.assertRaises(DomainError):
             self.app.create_quote(
@@ -164,8 +192,9 @@ class ModuleTests(unittest.TestCase):
         with self.assertRaises(DomainError):
             self.app.edit_request(request.request_id, "remove", "missing")
 
-    def test_invalid_quote_terms_leave_request_draft(self):
+    def test_invalid_quote_terms_leave_request_submitted(self):
         request = self.request()
+        self.app.submit_request(request.request_id)
         self.app.login("office", PASSWORD)
         for cost in ("abc", "NaN", "Infinity", "0", "-1", "1.001", "1000000"):
             with self.subTest(cost=cost), self.assertRaises(DomainError):
@@ -175,7 +204,7 @@ class ModuleTests(unittest.TestCase):
         for delivery in ("bad", "2026-02-30 10:00", "2026-11-01 09:00", "2026-11-01 08:00"):
             with self.subTest(delivery=delivery), self.assertRaises(DomainError):
                 self.app.create_quote(request.request_id, "10", "2026-11-01 09:00", delivery)
-        self.assertEqual(self.app.get_request(request.request_id).state, RequestState.DRAFT)
+        self.assertEqual(self.app.get_request(request.request_id).state, RequestState.SUBMITTED)
         self.assertFalse(self.repo.records.quotes)
 
     def test_quoted_request_and_quote_terms_are_locked(self):

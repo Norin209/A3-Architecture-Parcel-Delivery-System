@@ -4,6 +4,7 @@ import http.client
 import json
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -87,12 +88,19 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.client.request("/api/state")[0], 401)
 
     def test_host_origin_and_csrf_are_enforced(self):
-        status, _ = self.client.request("/api/bootstrap", headers={"Host": "evil.example"})
-        self.assertEqual(status, 403)
-        status, _ = self.client.request("/api/logout", {}, {"X-CSRF-Token": "wrong"})
-        self.assertEqual(status, 403)
-        status, _ = self.client.request("/api/logout", {}, {"Origin": "https://evil.example"})
-        self.assertEqual(status, 403)
+        def rejected(path, data=None, headers=None):
+            for attempt in range(3):
+                try:
+                    self.assertEqual(self.client.request(path, data, headers)[0], 403)
+                    return
+                except ConnectionAbortedError:
+                    if attempt == 2:
+                        raise
+                    time.sleep(0.05)
+
+        rejected("/api/bootstrap", headers={"Host": "evil.example"})
+        rejected("/api/logout", {}, {"X-CSRF-Token": "wrong"})
+        rejected("/api/logout", {}, {"Origin": "https://evil.example"})
 
     def test_manager_setup_does_not_expose_password_hashes(self):
         result = self.manager()
@@ -158,6 +166,13 @@ class WebTests(unittest.TestCase):
         data = {"request_id": request_id, "cost": "-5", "pickup_time": "2026-11-01T09:00",
                 "delivery_time": "2026-11-01T11:00"}
         self.assertEqual(self.client.request("/api/quotes", data)[0], 400)
+        status, result = self.client.request("/api/requests/submit", {"request_id": request_id})
+        self.assertEqual(status, 200, result)
+        self.assertEqual(result["requests"][0]["state"], "Submitted")
+        self.assertEqual(self.client.request("/api/requests/save", {
+            "request_id": request_id, "pickup": "Changed", "destination": "Hawthorn",
+            "parcels": [{"description": "Books"}],
+        })[0], 400)
         data["cost"] = "45.50"
         status, result = self.client.request("/api/quotes", data)
         self.assertEqual(status, 200, result)
@@ -171,6 +186,39 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.client.request("/api/requests/save", {
             "request_id": request_id, "pickup": "Changed", "destination": "Hawthorn",
         })[0], 400)
+
+    def test_customer_submits_staff_quotes_customer_accepts(self):
+        self.manager()
+        customer = BrowserClient(self.server)
+        customer.request("/api/bootstrap")
+        status, state = customer.request("/api/register", {
+            "name": "Norin", "phone": "0412345678", "email": "",
+            "username": "norin", "password": "CustomerPass123!",
+            "confirm_password": "CustomerPass123!",
+        })
+        self.assertEqual(status, 200, state)
+        customer_id = state["actor"]["customer_id"]
+        status, state = customer.request("/api/requests", {
+            "customer_id": customer_id, "pickup": "Melbourne",
+            "destination": "Hawthorn", "parcels": [{"description": "Books"}],
+        })
+        self.assertEqual(status, 200, state)
+        request_id = state["requests"][0]["request_id"]
+        quote_data = {"request_id": request_id, "cost": "45.50",
+                      "pickup_time": "2026-11-01T09:00",
+                      "delivery_time": "2026-11-01T11:00"}
+        self.assertEqual(self.client.request("/api/quotes", quote_data)[0], 400)
+        status, state = customer.request("/api/requests/submit",
+                                         {"request_id": request_id})
+        self.assertEqual(status, 200, state)
+        self.assertEqual(state["requests"][0]["state"], "Submitted")
+        status, state = self.client.request("/api/quotes", quote_data)
+        self.assertEqual(status, 200, state)
+        quote_id = state["quotes"][0]["quote_id"]
+        status, state = customer.request("/api/quotes/decision",
+                                         {"quote_id": quote_id, "accept": True})
+        self.assertEqual(status, 200, state)
+        self.assertEqual(state["requests"][0]["state"], "Accepted")
 
     def test_customer_cannot_access_other_customers_requests(self):
         self.manager()

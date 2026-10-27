@@ -30,6 +30,7 @@ class Role(str, Enum):
 
 class RequestState(str, Enum):
     DRAFT = "Draft"
+    SUBMITTED = "Submitted"
     QUOTED = "Quoted"
     ACCEPTED = "Accepted"
     REJECTED = "Rejected"
@@ -241,12 +242,20 @@ class DeliveryRequest:
             errors.append("At least one described parcel is required.")
         return errors
 
+    def submit(self) -> DeliveryRequest:
+        self.require_draft()
+        errors = self.validate_for_quote()
+        if errors:
+            raise DomainError(" ".join(errors))
+        return replace(self, state=RequestState.SUBMITTED)
+
     def create_quote(self, cost: str, pickup_time: str, delivery_time: str,
                      actor: UserAccount) -> DeliveryQuote:
         actor.require_office()
-        self.require_draft()
         if self.quote_id:
             raise DomainError("This request already has a quote.")
+        if self.state != RequestState.SUBMITTED:
+            raise DomainError("The customer must submit the request before quotation.")
         errors = self.validate_for_quote()
         if errors:
             raise DomainError(" ".join(errors))

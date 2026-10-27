@@ -1,5 +1,5 @@
-Verified at 2026-10-27T16:44:25.424904+00:00
-Python 3.12.4 on macOS-26.5.2-arm64-arm-64bit
+Verified at 2026-10-27T18:01:59.975357+00:00
+Python 3.11.16 on Windows-10-10.0.26300-SP0
 compileall: PASS (Python bytecode compilation)
 test_availability_change_releases_and_no_candidate_remains_unallocated (test_mekno.DeliveryTests.test_availability_change_releases_and_no_candidate_remains_unallocated) ... ok
 test_conflicts_adjacent_jobs_and_reassignment_history (test_mekno.DeliveryTests.test_conflicts_adjacent_jobs_and_reassignment_history) ... ok
@@ -27,7 +27,7 @@ test_failed_handoff_leaves_quote_pending (test_module.ModuleTests.test_failed_ha
 test_failed_save_preserves_memory_and_file (test_module.ModuleTests.test_failed_save_preserves_memory_and_file) ... ok
 test_first_manager_cannot_be_reset (test_module.ModuleTests.test_first_manager_cannot_be_reset) ... ok
 test_invalid_login_clears_previous_session (test_module.ModuleTests.test_invalid_login_clears_previous_session) ... ok
-test_invalid_quote_terms_leave_request_draft (test_module.ModuleTests.test_invalid_quote_terms_leave_request_draft) ... ok
+test_invalid_quote_terms_leave_request_submitted (test_module.ModuleTests.test_invalid_quote_terms_leave_request_submitted) ... ok
 test_manager_only_account_actions_and_history_retention (test_module.ModuleTests.test_manager_only_account_actions_and_history_retention) ... ok
 test_other_customer_cannot_decide_even_after_acceptance (test_module.ModuleTests.test_other_customer_cannot_decide_even_after_acceptance) ... ok
 test_passwords_are_hashed (test_module.ModuleTests.test_passwords_are_hashed) ... ok
@@ -36,6 +36,7 @@ test_quoted_request_and_quote_terms_are_locked (test_module.ModuleTests.test_quo
 test_registration_validation_is_atomic (test_module.ModuleTests.test_registration_validation_is_atomic) ... ok
 test_rejection_never_creates_delivery (test_module.ModuleTests.test_rejection_never_creates_delivery) ... ok
 test_save_failure_after_handoff_can_retry_without_duplicate (test_module.ModuleTests.test_save_failure_after_handoff_can_retry_without_duplicate) ... ok
+test_submission_is_required_and_locks_the_request (test_module.ModuleTests.test_submission_is_required_and_locks_the_request) ... ok
 test_usernames_are_case_insensitive (test_module.ModuleTests.test_usernames_are_case_insensitive) ... ok
 test_delivery_must_match_accepted_quote_delivery (test_payment.PaymentTests.test_delivery_must_match_accepted_quote_delivery) ... ok
 test_exact_collection_matches_accepted_quote (test_payment.PaymentTests.test_exact_collection_matches_accepted_quote) ... ok
@@ -45,6 +46,7 @@ test_payment_record_is_immutable (test_payment.PaymentTests.test_payment_record_
 test_unaccepted_quote_cannot_be_used_for_payment (test_payment.PaymentTests.test_unaccepted_quote_cannot_be_used_for_payment) ... ok
 test_assets_are_served_without_external_dependencies (test_web.WebTests.test_assets_are_served_without_external_dependencies) ... ok
 test_customer_cannot_access_other_customers_requests (test_web.WebTests.test_customer_cannot_access_other_customers_requests) ... ok
+test_customer_submits_staff_quotes_customer_accepts (test_web.WebTests.test_customer_submits_staff_quotes_customer_accepts) ... ok
 test_health_identifies_workspace_without_exposing_path (test_web.WebTests.test_health_identifies_workspace_without_exposing_path) ... ok
 test_host_origin_and_csrf_are_enforced (test_web.WebTests.test_host_origin_and_csrf_are_enforced) ... ok
 test_invalid_form_types_return_validation_errors (test_web.WebTests.test_invalid_form_types_return_validation_errors) ... ok
@@ -56,12 +58,12 @@ test_registration_and_browser_sessions_are_isolated (test_web.WebTests.test_regi
 test_whole_request_form_saves_atomically_and_preserves_parcel_ids (test_web.WebTests.test_whole_request_form_saves_atomically_and_preserves_parcel_ids) ... ok
 
 ----------------------------------------------------------------------
-Ran 53 tests in 18.824s
+Ran 55 tests in 28.607s
 
 OK
 
 Automated console walkthrough: PASS
 Packaged .pyz first-run and restart smoke tests: PASS
 Packaged GUI HTTP assets, setup and shutdown smoke test: PASS
-Rendered browser review: NOT COMPLETED (browser webview attachment timed out).
+Rendered browser review: NOT PERFORMED by this packaging script.
 No real user data was used or modified in these checks.

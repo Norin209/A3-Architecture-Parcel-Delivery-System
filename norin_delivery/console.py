@@ -6,7 +6,7 @@ from getpass import getpass
 from pathlib import Path
 
 from .integration import DemoDeliveryGateway
-from .models import DomainError, Role
+from .models import DomainError, RequestState, Role
 from .service import DeliveryApplication
 from .storage import JsonRepository, StorageError
 
@@ -147,6 +147,14 @@ class Console:
             raise DomainError("Choose an action from 1 to 5.")
         self.write("Draft updated and saved.")
 
+    def submit_request(self) -> None:
+        drafts = [r for r in self.app.list_requests()
+                  if r.state == RequestState.DRAFT]
+        request = self.select(drafts, self.request_label)
+        if self.confirm("Submit this request for a quote? It can no longer be edited."):
+            self.app.submit_request(request.request_id)
+            self.write("Request submitted. Office staff can now prepare a quote.")
+
     def show_quotes(self) -> None:
         quotes = self.app.list_quotes()
         if not quotes:
@@ -194,11 +202,13 @@ class Console:
             self.write(f"Customer saved: {customer.customer_id}")
 
     def quote(self) -> None:
-        request = self.request()
+        submitted = [r for r in self.app.list_requests()
+                     if r.state == RequestState.SUBMITTED]
+        request = self.select(submitted, self.request_label)
         cost = self.ask("Quoted cost in AUD (e.g. 45.50)")
         pickup = self.ask("Estimated pickup YYYY-MM-DD HH:MM (Melbourne local)")
         delivery = self.ask("Estimated delivery YYYY-MM-DD HH:MM (Melbourne local)")
-        if self.confirm(f"Issue AUD {cost} quote; lock request against editing?"):
+        if self.confirm(f"Issue AUD {cost} quote for this submitted request?"):
             quote = self.app.create_quote(request.request_id, cost, pickup, delivery)
             self.write(f"Quote saved: {quote.quote_id}. Awaiting customer's decision.")
 
@@ -253,10 +263,12 @@ class Console:
                             "1": self.show_requests, "2": self.new_request,
                             "3": self.edit_request, "4": self.show_quotes,
                             "5": self.decide, "6": self.update_contact,
+                            "11": self.submit_request,
                             "0": self.app.logout,
                         }
                         self.write("1 Requests | 2 New draft | 3 Edit draft | 4 Quotes")
                         self.write("5 Accept/reject quote | 6 Contact details | 0 Sign out")
+                        self.write("11 Submit request for quote")
                         if actor.role in (Role.OFFICE, Role.MANAGER):
                             actions.update({"7": self.phone_customer, "8": self.quote})
                             self.write("7 Add phone customer | 8 Prepare quote")

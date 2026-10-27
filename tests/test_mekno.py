@@ -42,6 +42,7 @@ class DeliveryTests(unittest.TestCase):
 
     def quote(self, start='09:00', end='11:00'):
         request = self.app.create_request(self.customer.customer_id, 'Melbourne', 'Hawthorn', ['Books', 'Clothes'])
+        self.app.submit_request(request.request_id)
         return self.app.create_quote(request.request_id, '45.50', '2026-11-01 '+start, '2026-11-01 '+end)
 
     def delivery(self, start='09:00', end='11:00'):
@@ -191,7 +192,9 @@ class IntegratedHttpTests(unittest.TestCase):
                 customer_id = state['customers'][0]['customer_id']
                 state = post('/api/requests', customer_id=customer_id, pickup='Melbourne', destination='Hawthorn',
                              parcels=[{'description':'Books'}])
-                state = post('/api/quotes', request_id=state['requests'][0]['request_id'], cost='45.50',
+                request_id = state['requests'][0]['request_id']
+                post('/api/requests/submit', request_id=request_id)
+                state = post('/api/quotes', request_id=request_id, cost='45.50',
                              pickup_time='2026-11-01T09:00', delivery_time='2026-11-01T11:00')
                 state = post('/api/quotes/decision', quote_id=state['quotes'][0]['quote_id'], accept=True)
                 delivery_id = state['deliveries'][0]['delivery_id']
