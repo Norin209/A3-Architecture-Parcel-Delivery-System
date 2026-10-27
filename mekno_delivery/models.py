@@ -90,6 +90,37 @@ class AvailabilitySchedule:
 
     def covers(self, start: str, end: str) -> bool:
         first, last = period(start, end)
+        windows = self._windows(first, last)
+        # Adjacent shifts can jointly cover one job across a day boundary.
+        cursor = first
+        for left, right in sorted(windows):
+            if left <= cursor < right:
+                cursor = right
+            if cursor >= last:
+                return True
+        return False
+
+    def covers_delivery(self, pickup: str, delivery: str) -> bool:
+        first, last = period(pickup, delivery)
+        if first.date() == last.date():
+            return self.covers(pickup, delivery)
+        windows = self._windows(first, last)
+        if not any(left <= first < right for left, right in windows):
+            return False
+        if not any(left <= last <= right for left, right in windows):
+            return False
+        # Off-duty hours between shifts are a pause, not unavailable work time.
+        # The same staff member must have a shift on every service date.
+        day = first.date()
+        while day <= last.date():
+            day_start = datetime.combine(day, time.min)
+            day_end = day_start + timedelta(days=1)
+            if not any(left < day_end and day_start < right for left, right in windows):
+                return False
+            day += timedelta(days=1)
+        return True
+
+    def _windows(self, first: datetime, last: datetime):
         if self.legacy_periods:
             windows = [period(a, b) for a, b in self.legacy_periods]
         else:
@@ -102,14 +133,7 @@ class AvailabilitySchedule:
                     left, right = weekly_shift(day, clock_in, clock_out)
                     windows.append((monday + timedelta(minutes=left + week * WEEK_MINUTES),
                                     monday + timedelta(minutes=right + week * WEEK_MINUTES)))
-        # Adjacent shifts can jointly cover one job across a day boundary.
-        cursor = first
-        for left, right in sorted(windows):
-            if left <= cursor < right:
-                cursor = right
-            if cursor >= last:
-                return True
-        return False
+        return windows
 
 
 @dataclass(frozen=True)
@@ -125,7 +149,7 @@ class DeliveryStaff:
         required(self.phone, 'Phone')
 
     def eligible(self, schedule: AvailabilitySchedule, start: str, end: str) -> bool:
-        return self.active and schedule.staff_id == self.staff_id and schedule.covers(start, end)
+        return self.active and schedule.staff_id == self.staff_id and schedule.covers_delivery(start, end)
 
 
 @dataclass(frozen=True)

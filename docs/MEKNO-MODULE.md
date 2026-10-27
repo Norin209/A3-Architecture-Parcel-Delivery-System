@@ -66,8 +66,13 @@ The browser uses the existing local HTTP server and existing page styles.
 - Weekly availability repeats every Monday-Sunday. One shift can be entered per
   day. A clock-out earlier than clock-in means the shift ends the next day.
   Shifts cannot overlap, but adjacent shifts may jointly cover a job.
-  Availability must cover the entire dated quote interval; job intervals are
-  half open, allowing consecutive jobs at the same boundary time.
+  For a same-day delivery, availability covers the whole quoted interval.
+  For a delivery spanning dates, the assigned staff member must be on shift at
+  pickup and delivery and have a shift on every service date. Off-duty hours
+  between shifts are paused; one assignment remains current throughout the job.
+  There is no facility handoff or second driver. Other jobs whose quoted
+  intervals overlap still conflict, even during an off-duty overnight pause.
+  Job intervals are half open, allowing consecutive jobs at the same boundary.
 - Dated schedules saved by the earlier version remain readable until a user
   replaces them in the weekly-hours form. They do not silently become recurring.
 - Reassignment requires a reason and retains the previous allocation. Failed

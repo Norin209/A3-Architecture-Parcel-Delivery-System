@@ -45,6 +45,26 @@ class WeeklyAvailabilityTests(unittest.TestCase):
         self.assertTrue(schedule.covers('2026-11-01 09:00', '2026-11-01 11:00'))
         self.assertFalse(schedule.covers('2026-11-08 09:00', '2026-11-08 11:00'))
 
+    def test_delivery_across_days_pauses_outside_working_hours(self):
+        shifts = AvailabilitySchedule('staff', (
+            ('Thursday', '07:00', '23:00'),
+            ('Friday', '07:00', '23:00'),
+        ))
+        self.assertFalse(shifts.covers('2026-10-29 16:00', '2026-10-30 18:00'))
+        self.assertTrue(shifts.covers_delivery('2026-10-29 16:00', '2026-10-30 18:00'))
+        self.assertTrue(shifts.covers_delivery('2026-10-29 16:00', '2026-10-29 18:00'))
+        self.assertFalse(shifts.covers_delivery('2026-10-29 06:00', '2026-10-30 18:00'))
+        self.assertFalse(shifts.covers_delivery('2026-10-29 16:00', '2026-10-30 23:30'))
+        self.assertFalse(shifts.covers_delivery('2026-10-29 22:00', '2026-10-29 23:30'))
+        self.assertFalse(shifts.covers_delivery('2026-10-29 16:00', '2026-10-31 18:00'))
+
+    def test_delivery_across_days_requires_each_service_day(self):
+        shifts = AvailabilitySchedule('staff', (
+            ('Thursday', '07:00', '23:00'),
+            ('Saturday', '07:00', '23:00'),
+        ))
+        self.assertFalse(shifts.covers_delivery('2026-10-29 16:00', '2026-10-31 18:00'))
+
 
 class DeliveryTests(unittest.TestCase):
     @classmethod
@@ -126,6 +146,23 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual([], self.ops.candidates(job))
         self.assertEqual('Awaiting allocation', self.ops.view()['deliveries'][0]['state'])
         self.assertFalse(self.ops.view()['allocations'][0]['current'])
+
+    def test_overnight_delivery_allocation_and_schedule_change(self):
+        request = self.app.create_request(self.customer.customer_id, 'Melbourne',
+                                          'Hawthorn', ['Books'])
+        self.app.submit_request(request.request_id)
+        quote = self.app.create_quote(request.request_id, '45.50',
+                                      '2026-10-29 16:00', '2026-10-30 18:00')
+        job = self.app.decide_quote(quote.quote_id, True).delivery_id
+        shifts = [('Thursday', '07:00', '23:00'), ('Friday', '07:00', '23:00')]
+        self.ops.set_availability(self.one.staff_id, shifts)
+        self.assertIn(self.one.staff_id, [s.staff_id for s in self.ops.candidates(job)])
+        self.ops.allocate(job, self.one.staff_id)
+        self.assertEqual('Allocated', self.ops.view()['deliveries'][0]['state'])
+        self.ops.set_availability(self.one.staff_id, shifts[:1])
+        self.assertEqual('Awaiting allocation', self.ops.view()['deliveries'][0]['state'])
+        with self.assertRaises(DomainError):
+            self.ops.allocate(job, self.one.staff_id)
 
     def test_invalid_availability_does_not_release_assignment(self):
         job = self.delivery()

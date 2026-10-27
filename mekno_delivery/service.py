@@ -117,7 +117,7 @@ class DeliveryOperations:
         with self.repository.transaction() as db:
             self.repository.get(db, 'staff', staff_id)
             affected = [a for a in self.repository.all(db, 'allocations')
-                        if a.current and a.staff_id == staff_id and not schedule.covers(a.start, a.end)]
+                        if a.current and a.staff_id == staff_id and not schedule.covers_delivery(a.start, a.end)]
             # Validate everything first: in-transit jobs cannot lose their assignment.
             for a in affected:
                 self.repository.get(db, 'deliveries', a.delivery_id).require_before_pickup()
@@ -163,7 +163,7 @@ class DeliveryOperations:
             delivery = self.job(db, delivery_id)
             delivery.require_before_pickup()
             if not self._eligible(db, delivery, staff_id):
-                raise DomainError('Staff must be active, available for the whole job, and free of conflicting jobs.')
+                raise DomainError('Staff must be active, on shift on each delivery day, available at pickup and delivery, and free of conflicting jobs.')
             if delivery.current_allocation_id:
                 old = self.repository.get(db, 'allocations', delivery.current_allocation_id)
                 if old.staff_id == staff_id:

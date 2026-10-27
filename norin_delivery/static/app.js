@@ -290,7 +290,7 @@ function deliveryForm(type, id) {
     body = `${legacy}<div class="availability-grid">${weekdays.map(day => availabilityDayRow(day, shifts.get(day))).join('')}</div><div class="hint-box availability-note">Untick a day to mark it off. A clock-out earlier than clock-in means the shift ends the next day. Changing hours can release jobs before pickup; in-transit jobs must remain covered.</div>`;
     type = 'availability'; extra = `<input type="hidden" name="staff_id" value="${esc(id)}">`;
   } else if (type === 'assign') {
-    title = 'Allocate delivery staff'; description = 'Availability and overlapping jobs are checked when you save.';
+    title = 'Allocate delivery staff'; description = 'For jobs across days, off-duty hours are skipped. Staff must work on each date and be available at pickup and delivery.';
     body = `<div class="field"><label for="allocate-staff">Delivery staff</label><select id="allocate-staff" name="staff_id" required>${state.delivery_staff.filter(s => s.active).map(s => `<option value="${esc(s.staff_id)}">${esc(s.display_name)}</option>`).join('')}</select></div>${field('Reason (required for reassignment)','reason')}`;
     type = 'allocate';
   } else if (type === 'release') {
