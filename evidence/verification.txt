@@ -1,4 +1,4 @@
-Verified at 2026-10-27T18:12:16.275161+00:00
+Verified at 2026-10-27T18:22:51.386454+00:00
 Python 3.11.16 on Windows-10-10.0.26300-SP0
 compileall: PASS (Python bytecode compilation)
 test_availability_change_releases_and_no_candidate_remains_unallocated (test_mekno.DeliveryTests.test_availability_change_releases_and_no_candidate_remains_unallocated) ... ok
@@ -61,7 +61,7 @@ test_registration_and_browser_sessions_are_isolated (test_web.WebTests.test_regi
 test_whole_request_form_saves_atomically_and_preserves_parcel_ids (test_web.WebTests.test_whole_request_form_saves_atomically_and_preserves_parcel_ids) ... ok
 
 ----------------------------------------------------------------------
-Ran 58 tests in 26.387s
+Ran 58 tests in 21.712s
 
 OK
 
