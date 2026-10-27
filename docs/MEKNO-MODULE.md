@@ -27,8 +27,8 @@ in the integrated workspace. Existing real customer files were not used in tests
 
 1. Create the first manager and sign in.
 2. Open **Staff & availability**, add two delivery staff records, and record
-   working periods covering the planned pickup and delivery times. Use **Add
-   working period** and choose a start and end time for each shift.
+   weekly working hours covering the planned pickup and delivery times. Tick
+   the relevant Monday-Sunday days and enter clock-in and clock-out times.
 3. In **Team accounts**, create delivery-staff accounts using the staff IDs
    displayed in the directory. Unknown/inactive IDs are rejected.
 4. Add a phone customer and request with parcels. Submit the request, then
@@ -63,9 +63,13 @@ The browser uses the existing local HTTP server and existing page styles.
 - Managers create/activate/deactivate staff. Office staff and managers allocate
   and release jobs. Drivers edit their own availability and operate only their
   current jobs. Customers see their own deliveries without staff directories.
-- Availability must cover the entire quoted interval. Working periods cannot
-  overlap, but adjacent periods may jointly cover a job. Job intervals are
+- Weekly availability repeats every Monday-Sunday. One shift can be entered per
+  day. A clock-out earlier than clock-in means the shift ends the next day.
+  Shifts cannot overlap, but adjacent shifts may jointly cover a job.
+  Availability must cover the entire dated quote interval; job intervals are
   half open, allowing consecutive jobs at the same boundary time.
+- Dated schedules saved by the earlier version remain readable until a user
+  replaces them in the weekly-hours form. They do not silently become recurring.
 - Reassignment requires a reason and retains the previous allocation. Failed
   reassignment rolls back both release and creation. At most one allocation is
   current per delivery through the transactional service.

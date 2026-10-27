@@ -1,4 +1,4 @@
-Verified at 2026-10-27T18:06:47.008060+00:00
+Verified at 2026-10-27T18:12:16.275161+00:00
 Python 3.11.16 on Windows-10-10.0.26300-SP0
 compileall: PASS (Python bytecode compilation)
 test_availability_change_releases_and_no_candidate_remains_unallocated (test_mekno.DeliveryTests.test_availability_change_releases_and_no_candidate_remains_unallocated) ... ok
@@ -10,6 +10,9 @@ test_real_handoff_restart_and_conflicting_terms (test_mekno.DeliveryTests.test_r
 test_retry_after_norin_save_failure (test_mekno.DeliveryTests.test_retry_after_norin_save_failure) ... ok
 test_sql_transaction_rolls_back_reassignment_failure (test_mekno.DeliveryTests.test_sql_transaction_rolls_back_reassignment_failure) ... ok
 test_browser_workflow_and_staff_validation (test_mekno.IntegratedHttpTests.test_browser_workflow_and_staff_validation) ... ok
+test_old_dated_schedule_remains_readable_until_replaced (test_mekno.WeeklyAvailabilityTests.test_old_dated_schedule_remains_readable_until_replaced) ... ok
+test_weekly_hours_reject_overlaps_and_duplicate_days (test_mekno.WeeklyAvailabilityTests.test_weekly_hours_reject_overlaps_and_duplicate_days) ... ok
+test_weekly_hours_repeat_and_join_across_midnight (test_mekno.WeeklyAvailabilityTests.test_weekly_hours_repeat_and_join_across_midnight) ... ok
 test_acceptance_is_idempotent_even_after_restart (test_module.ModuleTests.test_acceptance_is_idempotent_even_after_restart) ... ok
 test_accepted_quote_cannot_be_rejected (test_module.ModuleTests.test_accepted_quote_cannot_be_rejected) ... ok
 test_blank_parcel_and_missing_parcel_fail (test_module.ModuleTests.test_blank_parcel_and_missing_parcel_fail) ... ok
@@ -58,7 +61,7 @@ test_registration_and_browser_sessions_are_isolated (test_web.WebTests.test_regi
 test_whole_request_form_saves_atomically_and_preserves_parcel_ids (test_web.WebTests.test_whole_request_form_saves_atomically_and_preserves_parcel_ids) ... ok
 
 ----------------------------------------------------------------------
-Ran 55 tests in 27.964s
+Ran 58 tests in 26.387s
 
 OK
 

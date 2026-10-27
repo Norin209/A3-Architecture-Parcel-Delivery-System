@@ -29,6 +29,7 @@ customer contact forms, and manager account controls. Menus follow the signed-in
 role. Draft forms save as one operation, and errors keep entered values visible.
 Customers submit complete drafts for quotation. Staff can issue a quote only
 after submission; the customer then accepts or rejects it.
+Staff availability uses repeating Monday-Sunday clock-in and clock-out times.
 
 First use asks you to create the initial manager. Existing console accounts
 and `data/records.json` work in the UI as well. Do not run the console and web

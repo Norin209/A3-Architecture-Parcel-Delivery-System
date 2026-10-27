@@ -10,8 +10,40 @@ from norin_delivery.service import DeliveryApplication
 from norin_delivery.storage import JsonRepository, StorageError
 from norin_delivery.integration import AcceptedDeliveryData
 from mekno_delivery import DeliveryRepository, DeliveryOperations, MeknoGateway
+from mekno_delivery.models import AvailabilitySchedule
 
 PASSWORD = 'DemoPass123!'
+
+
+class WeeklyAvailabilityTests(unittest.TestCase):
+    def test_weekly_hours_repeat_and_join_across_midnight(self):
+        schedule = AvailabilitySchedule('staff', (
+            ('Sunday', '22:00', '02:00'),
+            ('Monday', '02:00', '10:00'),
+        ))
+        self.assertTrue(schedule.covers('2026-11-01 23:00', '2026-11-02 03:00'))
+        self.assertTrue(schedule.covers('2026-11-08 23:00', '2026-11-09 03:00'))
+        self.assertFalse(schedule.covers('2026-11-01 18:00', '2026-11-01 20:00'))
+
+    def test_weekly_hours_reject_overlaps_and_duplicate_days(self):
+        with self.assertRaises(DomainError):
+            AvailabilitySchedule('staff', (
+                ('Sunday', '22:00', '02:00'),
+                ('Monday', '01:00', '09:00'),
+            ))
+        with self.assertRaises(DomainError):
+            AvailabilitySchedule('staff', (
+                ('Monday', '09:00', '12:00'),
+                ('Monday', '13:00', '17:00'),
+            ))
+
+    def test_old_dated_schedule_remains_readable_until_replaced(self):
+        schedule = AvailabilitySchedule('staff', (('2026-11-01 08:00',
+                                                   '2026-11-01 18:00'),))
+        self.assertEqual(schedule.periods, ())
+        self.assertTrue(schedule.legacy_periods)
+        self.assertTrue(schedule.covers('2026-11-01 09:00', '2026-11-01 11:00'))
+        self.assertFalse(schedule.covers('2026-11-08 09:00', '2026-11-08 11:00'))
 
 
 class DeliveryTests(unittest.TestCase):
@@ -36,7 +68,7 @@ class DeliveryTests(unittest.TestCase):
         self.ops = DeliveryOperations(self.repo, self.app)
         self.one = self.ops.create_staff('Driver One', '0412345678')
         self.two = self.ops.create_staff('Driver Two', '0412345679')
-        self.shift = [('2026-11-01 08:00', '2026-11-01 18:00')]
+        self.shift = [('Sunday', '08:00', '18:00')]
         for staff in (self.one, self.two):
             self.ops.set_availability(staff.staff_id, self.shift)
 
@@ -182,7 +214,7 @@ class IntegratedHttpTests(unittest.TestCase):
                 state = post('/api/delivery/staff', name='Driver', phone='0412345678')
                 staff_id = state['delivery_staff'][0]['staff_id']
                 post('/api/delivery/availability', staff_id=staff_id,
-                     periods=[['2026-11-01 08:00', '2026-11-01 18:00']])
+                     periods=[['Sunday', '08:00', '18:00']])
                 status, _ = client.request('/api/accounts', dict(username='badstaff', password=PASSWORD,
                     confirm_password=PASSWORD, role='Delivery staff', staff_id='missing'))
                 self.assertEqual(400, status)

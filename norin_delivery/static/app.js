@@ -34,7 +34,7 @@ const brand = () => `<div class="brand"><span class="brand-mark">${icon('box')}<
 let state = {actor:null, requests:[], customers:[], quotes:[], accounts:[], deliveries:[], delivery_staff:[], schedules:[], allocations:[], delivery_events:[], payments:[], view:'overview', filter:'All', search:'', authMode:'login'};
 let toastTimer;
 let afterCustomer = false;
-let availabilityRowId = 0;
+const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 async function api(path, data) {
   const options = {headers:{}, credentials:'same-origin'};
@@ -256,15 +256,22 @@ function deliveriesPage() {
 }
 
 function staffPage() {
-  return heading('Staff & availability','Set Melbourne local working periods before allocating jobs.',state.actor.role === 'Manager' ? 'delivery-new-staff' : '', 'Add delivery staff') +
-    `<section class="panel"><header class="panel-header"><h2>Delivery team</h2></header>${state.delivery_staff.length ? `<div class="table-wrap"><table><thead><tr><th>Name / staff ID</th><th>Contact</th><th>Status</th><th>Availability</th><th>Actions</th></tr></thead><tbody>${state.delivery_staff.map(s => `<tr><td><strong>${esc(s.display_name)}</strong><div class="table-secondary">${esc(s.staff_id)}</div></td><td>${esc(s.phone)}</td><td>${badge(s.active ? 'Active' : 'Inactive')}</td><td>${(state.schedules.find(x => x.staff_id === s.staff_id)?.periods || []).map(([a,b]) => `${esc(date(a))} – ${esc(date(b))}`).join('<br>') || 'No availability set'}</td><td>${button('Edit availability','delivery-schedule',{id:s.staff_id,kind:'text'})}${state.actor.role === 'Manager' ? button(s.active ? 'Deactivate' : 'Activate','delivery-active',{id:s.staff_id,kind:'text'}) : ''}</td></tr>`).join('')}</tbody></table></div>` : empty('No delivery staff yet.','A manager can create staff records here, then link them to delivery staff accounts.')}</section>`;
+  const rows = state.delivery_staff.map(staff => {
+    const schedule = state.schedules.find(item => item.staff_id === staff.staff_id);
+    const hours = (schedule?.periods || []).map(([day, clockIn, clockOut]) =>
+      `${esc(day.slice(0, 3))} ${esc(clockIn)}?${esc(clockOut)}${clockOut < clockIn ? ' (next day)' : ''}`).join('<br>');
+    const availability = hours || (schedule?.legacy_periods?.length ? 'Dated schedule ? update to weekly' : 'No weekly hours set');
+    const activeButton = staff.active ? 'Deactivate' : 'Activate';
+    const activeStyle = staff.active ? 'danger small' : 'secondary small';
+    return `<tr><td><strong>${esc(staff.display_name)}</strong><div class="table-secondary">${esc(staff.staff_id)}</div></td><td>${esc(staff.phone)}</td><td>${badge(staff.active ? 'Active' : 'Inactive')}</td><td class="staff-hours">${availability}</td><td class="staff-actions-cell"><div class="staff-actions">${button('Edit hours','delivery-schedule',{id:staff.staff_id,kind:'secondary small'})}${state.actor.role === 'Manager' ? button(activeButton,'delivery-active',{id:staff.staff_id,kind:activeStyle}) : ''}</div></td></tr>`;
+  }).join('');
+  return heading('Staff & availability','Set repeating weekly hours before allocating jobs.',state.actor.role === 'Manager' ? 'delivery-new-staff' : '', 'Add delivery staff') +
+    `<section class="panel"><header class="panel-header"><h2>Delivery team</h2></header>${rows ? `<div class="table-wrap"><table><thead><tr><th>Name / staff ID</th><th>Contact</th><th>Status</th><th>Weekly hours</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>` : empty('No delivery staff yet.','A manager can create staff records here, then link them to delivery staff accounts.')}</section>`;
 }
 
-function availabilityRow(period = ['', '']) {
-  const rowId = ++availabilityRowId;
-  const start = esc((period[0] || '').replace(' ', 'T'));
-  const end = esc((period[1] || '').replace(' ', 'T'));
-  return `<div class="availability-row"><div class="field"><label for="availability-start-${rowId}">Start</label><input id="availability-start-${rowId}" type="datetime-local" data-start value="${start}"></div><div class="field"><label for="availability-end-${rowId}">End</label><input id="availability-end-${rowId}" type="datetime-local" data-end value="${end}"></div>${button('Remove','remove-availability-period',{kind:'text',extra:'aria-label="Remove working period"'})}</div>`;
+function availabilityDayRow(day, shift) {
+  const working = Boolean(shift);
+  return `<div class="availability-day-row" data-day="${day}"><label class="availability-day"><input type="checkbox" data-working ${working ? 'checked' : ''}><span>${day}</span></label><div class="field"><label for="clock-in-${day}">Clock in</label><input id="clock-in-${day}" type="time" data-clock-in value="${esc(shift?.[1] || '')}" ${working ? '' : 'disabled'}></div><div class="field"><label for="clock-out-${day}">Clock out</label><input id="clock-out-${day}" type="time" data-clock-out value="${esc(shift?.[2] || '')}" ${working ? '' : 'disabled'}></div></div>`;
 }
 
 function deliveryForm(type, id) {
@@ -276,9 +283,11 @@ function deliveryForm(type, id) {
     type = 'staff';
   } else if (type === 'schedule') {
     title = `Availability for ${esc(s.display_name)}`;
-    description = 'Choose start and end times in Melbourne local time.';
-    const periods = state.schedules.find(x => x.staff_id === id)?.periods || [];
-    body = `<div id="availability-periods">${(periods.length ? periods : [['', '']]).map(availabilityRow).join('')}</div>${button('Add working period','add-availability-period',{kind:'secondary',symbol:'plus'})}<div class="hint-box availability-note">Remove every period and save to clear availability. Jobs outside the new availability will be released for reassignment. In-transit jobs must remain covered.</div>`;
+    description = 'Set repeating weekly hours in Melbourne local time.';
+    const schedule = state.schedules.find(x => x.staff_id === id);
+    const shifts = new Map((schedule?.periods || []).map(shift => [shift[0], shift]));
+    const legacy = schedule?.legacy_periods?.length ? '<div class="hint-box">This staff member has dated availability from the earlier version. Save weekly hours here to replace it.</div>' : '';
+    body = `${legacy}<div class="availability-grid">${weekdays.map(day => availabilityDayRow(day, shifts.get(day))).join('')}</div><div class="hint-box availability-note">Untick a day to mark it off. A clock-out earlier than clock-in means the shift ends the next day. Changing hours can release jobs before pickup; in-transit jobs must remain covered.</div>`;
     type = 'availability'; extra = `<input type="hidden" name="staff_id" value="${esc(id)}">`;
   } else if (type === 'assign') {
     title = 'Allocate delivery staff'; description = 'Availability and overlapping jobs are checked when you save.';
@@ -356,13 +365,6 @@ document.addEventListener('click', async event => {
         break;
       }
       case 'remove-parcel': target.closest('.parcel-row').remove(); break;
-      case 'add-availability-period':
-        if ($('#availability-periods').children.length < 100) {
-          $('#availability-periods').insertAdjacentHTML('beforeend', availabilityRow());
-          $('#availability-periods').lastElementChild.querySelector('[data-start]').focus();
-        } else notify('No more than 100 working periods are allowed.');
-        break;
-      case 'remove-availability-period': target.closest('.availability-row').remove(); break;
     }
   } catch (error) { notify(error.message); }
 });
@@ -378,6 +380,17 @@ document.addEventListener('input', event => {
 });
 document.addEventListener('change', event => {
   if (event.target.id === 'role') $('#staff-id-field').hidden = event.target.value !== 'Delivery staff';
+  if (event.target.matches('[data-working]')) {
+    const row = event.target.closest('.availability-day-row');
+    const clockIn = row.querySelector('[data-clock-in]');
+    const clockOut = row.querySelector('[data-clock-out]');
+    clockIn.disabled = clockOut.disabled = !event.target.checked;
+    if (event.target.checked) {
+      if (!clockIn.value) clockIn.value = '09:00';
+      if (!clockOut.value) clockOut.value = '17:00';
+      clockIn.focus();
+    }
+  }
 });
 
 document.addEventListener('submit', async event => {
@@ -395,16 +408,16 @@ document.addEventListener('submit', async event => {
     endpoint = '/api/delivery/' + type.slice(9);
     if (type === 'delivery-availability') {
       data.periods = [];
-      for (const row of form.querySelectorAll('.availability-row')) {
-        const start = row.querySelector('[data-start]').value;
-        const end = row.querySelector('[data-end]').value;
-        if (!start && !end) continue;
-        if (!start || !end || end <= start) {
-          errorBox.textContent = 'Each working period needs a start and an end after the start.';
+      for (const row of form.querySelectorAll('.availability-day-row')) {
+        if (!row.querySelector('[data-working]').checked) continue;
+        const clockIn = row.querySelector('[data-clock-in]').value;
+        const clockOut = row.querySelector('[data-clock-out]').value;
+        if (!clockIn || !clockOut || clockIn === clockOut) {
+          errorBox.textContent = 'Each selected day needs different clock-in and clock-out times.';
           errorBox.focus();
           return;
         }
-        data.periods.push([start.replace('T',' '), end.replace('T',' ')]);
+        data.periods.push([row.dataset.day, clockIn, clockOut]);
       }
     }
     if (type === 'delivery-active') data.active = data.active === 'true';

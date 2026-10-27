@@ -277,10 +277,10 @@ class WebHandler(BaseHTTPRequestHandler):
                 ops.create_staff(field('name'), field('phone'))
             elif action == 'availability':
                 periods = data.get('periods')
-                if not isinstance(periods, list) or len(periods) > 100 or any(
-                    not isinstance(x, list) or len(x) != 2 or
+                if not isinstance(periods, list) or len(periods) > 7 or any(
+                    not isinstance(x, list) or len(x) != 3 or
                     any(not isinstance(v, str) for v in x) for x in periods):
-                    raise DomainError('Provide start and end pairs for availability.')
+                    raise DomainError('Provide a day, clock-in and clock-out for each shift.')
                 ops.set_availability(field('staff_id'), periods)
             elif action == 'active':
                 ops.set_active(field('staff_id'), data.get('active'))
