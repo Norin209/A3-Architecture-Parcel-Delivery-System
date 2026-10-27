@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 
 from .integration import DemoDeliveryGateway
+from mekno_delivery import DeliveryRepository, DeliveryOperations, MeknoGateway
 from .models import DomainError, Role
 from .service import DeliveryApplication
 from .storage import JsonRepository, StorageError
@@ -66,6 +67,7 @@ class DeliveryWebServer(HTTPServer):
     def __init__(self, address, repository, gateway=None):
         self.repository = repository
         self.gateway = gateway or DemoDeliveryGateway()
+        self.delivery_repository = self.gateway.repository if isinstance(self.gateway, MeknoGateway) else None
         self.sessions: dict[str, Session] = {}
         super().__init__(address, WebHandler)
 
@@ -161,6 +163,8 @@ class WebHandler(BaseHTTPRequestHandler):
         actor = app.actor
         return {
             **self._bootstrap(),
+            **(DeliveryOperations(self.server.delivery_repository, app).view()
+               if self.server.delivery_repository else {}),
             "customers": [asdict(x) for x in app.list_customers()],
             "requests": [asdict(x) for x in app.list_requests()],
             "quotes": [asdict(x) for x in app.list_quotes()],
@@ -262,7 +266,37 @@ class WebHandler(BaseHTTPRequestHandler):
             if not isinstance(data.get("accept"), bool):
                 raise DomainError("Choose accept or reject.")
             app.decide_quote(field("quote_id"), data["accept"])
+        elif path.startswith('/api/delivery/'):
+            if not self.server.delivery_repository:
+                raise DomainError('Start the integrated workspace to use delivery operations.')
+            ops = DeliveryOperations(self.server.delivery_repository, app)
+            action = path.removeprefix('/api/delivery/')
+            if action == 'staff':
+                ops.create_staff(field('name'), field('phone'))
+            elif action == 'availability':
+                periods = data.get('periods')
+                if not isinstance(periods, list) or len(periods) > 100 or any(
+                    not isinstance(x, list) or len(x) != 2 or
+                    any(not isinstance(v, str) for v in x) for x in periods):
+                    raise DomainError('Provide start and end pairs for availability.')
+                ops.set_availability(field('staff_id'), periods)
+            elif action == 'active':
+                ops.set_active(field('staff_id'), data.get('active'))
+            elif action == 'allocate':
+                ops.allocate(field('delivery_id'), field('staff_id'), field('reason'))
+            elif action == 'release':
+                ops.release(field('delivery_id'), field('reason'))
+            elif action == 'pickup':
+                ops.pickup(field('delivery_id'))
+            elif action == 'payment':
+                ops.collect_payment(field('delivery_id'), field('amount'))
+            elif action == 'complete':
+                ops.complete(field('delivery_id'))
+            else:
+                raise DomainError('Unknown delivery action.')
         elif path == "/api/accounts":
+            if self.server.delivery_repository and Role(field('role')) == Role.DELIVERY:
+                DeliveryOperations(self.server.delivery_repository, app).validate_staff(field('staff_id'))
             app.register_staff_account(field("username"), field("password"),
                                        Role(field("role")), field("staff_id") or None)
         elif path == "/api/accounts/deactivate":
@@ -282,8 +316,9 @@ def main() -> int:
     args = parser.parse_args()
     try:
         repository = JsonRepository(args.data)
+        gateway = MeknoGateway(DeliveryRepository(args.data.with_suffix('.delivery.sqlite3')))
         try:
-            server = DeliveryWebServer(("127.0.0.1", args.port), repository)
+            server = DeliveryWebServer(("127.0.0.1", args.port), repository, gateway)
         except OSError:
             # Reopening the desktop launcher should reuse its running server.
             url = f"http://127.0.0.1:{args.port}"

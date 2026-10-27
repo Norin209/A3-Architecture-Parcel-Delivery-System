@@ -1,6 +1,15 @@
-Verified at 2026-10-27T06:59:27.790065+00:00
-Python 3.11.16 on Windows-10-10.0.26300-SP0
+Verified at 2026-10-27T16:44:25.424904+00:00
+Python 3.12.4 on macOS-26.5.2-arm64-arm-64bit
 compileall: PASS (Python bytecode compilation)
+test_availability_change_releases_and_no_candidate_remains_unallocated (test_mekno.DeliveryTests.test_availability_change_releases_and_no_candidate_remains_unallocated) ... ok
+test_conflicts_adjacent_jobs_and_reassignment_history (test_mekno.DeliveryTests.test_conflicts_adjacent_jobs_and_reassignment_history) ... ok
+test_customer_and_other_driver_permissions (test_mekno.DeliveryTests.test_customer_and_other_driver_permissions) ... ok
+test_invalid_availability_does_not_release_assignment (test_mekno.DeliveryTests.test_invalid_availability_does_not_release_assignment) ... ok
+test_pickup_payment_completion_and_restarting (test_mekno.DeliveryTests.test_pickup_payment_completion_and_restarting) ... ok
+test_real_handoff_restart_and_conflicting_terms (test_mekno.DeliveryTests.test_real_handoff_restart_and_conflicting_terms) ... ok
+test_retry_after_norin_save_failure (test_mekno.DeliveryTests.test_retry_after_norin_save_failure) ... ok
+test_sql_transaction_rolls_back_reassignment_failure (test_mekno.DeliveryTests.test_sql_transaction_rolls_back_reassignment_failure) ... ok
+test_browser_workflow_and_staff_validation (test_mekno.IntegratedHttpTests.test_browser_workflow_and_staff_validation) ... ok
 test_acceptance_is_idempotent_even_after_restart (test_module.ModuleTests.test_acceptance_is_idempotent_even_after_restart) ... ok
 test_accepted_quote_cannot_be_rejected (test_module.ModuleTests.test_accepted_quote_cannot_be_rejected) ... ok
 test_blank_parcel_and_missing_parcel_fail (test_module.ModuleTests.test_blank_parcel_and_missing_parcel_fail) ... ok
@@ -28,6 +37,12 @@ test_registration_validation_is_atomic (test_module.ModuleTests.test_registratio
 test_rejection_never_creates_delivery (test_module.ModuleTests.test_rejection_never_creates_delivery) ... ok
 test_save_failure_after_handoff_can_retry_without_duplicate (test_module.ModuleTests.test_save_failure_after_handoff_can_retry_without_duplicate) ... ok
 test_usernames_are_case_insensitive (test_module.ModuleTests.test_usernames_are_case_insensitive) ... ok
+test_delivery_must_match_accepted_quote_delivery (test_payment.PaymentTests.test_delivery_must_match_accepted_quote_delivery) ... ok
+test_exact_collection_matches_accepted_quote (test_payment.PaymentTests.test_exact_collection_matches_accepted_quote) ... ok
+test_invalid_collection_amount_is_rejected (test_payment.PaymentTests.test_invalid_collection_amount_is_rejected) ... ok
+test_mismatch_is_recorded_without_changing_accepted_terms (test_payment.PaymentTests.test_mismatch_is_recorded_without_changing_accepted_terms) ... ok
+test_payment_record_is_immutable (test_payment.PaymentTests.test_payment_record_is_immutable) ... ok
+test_unaccepted_quote_cannot_be_used_for_payment (test_payment.PaymentTests.test_unaccepted_quote_cannot_be_used_for_payment) ... ok
 test_assets_are_served_without_external_dependencies (test_web.WebTests.test_assets_are_served_without_external_dependencies) ... ok
 test_customer_cannot_access_other_customers_requests (test_web.WebTests.test_customer_cannot_access_other_customers_requests) ... ok
 test_health_identifies_workspace_without_exposing_path (test_web.WebTests.test_health_identifies_workspace_without_exposing_path) ... ok
@@ -41,12 +56,12 @@ test_registration_and_browser_sessions_are_isolated (test_web.WebTests.test_regi
 test_whole_request_form_saves_atomically_and_preserves_parcel_ids (test_web.WebTests.test_whole_request_form_saves_atomically_and_preserves_parcel_ids) ... ok
 
 ----------------------------------------------------------------------
-Ran 38 tests in 17.155s
+Ran 53 tests in 18.824s
 
 OK
 
 Automated console walkthrough: PASS
 Packaged .pyz first-run and restart smoke tests: PASS
 Packaged GUI HTTP assets, setup and shutdown smoke test: PASS
-Rendered browser review: NOT COMPLETED (computer-use URL check blocked).
+Rendered browser review: NOT COMPLETED (browser webview attachment timed out).
 No real user data was used or modified in these checks.

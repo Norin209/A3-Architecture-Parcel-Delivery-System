@@ -1,3 +1,8 @@
+> **Implementation now available:** `mekno_delivery.MeknoGateway` implements
+> this boundary and is connected by `norin_delivery.web.main`. The original
+> example below describes the interface. See [module guide](MEKNO-MODULE.md)
+> for the real implementation, persistence and retry rules.
+
 # Connecting Norin's module to the group system
 
 ## Boundary for Mekno

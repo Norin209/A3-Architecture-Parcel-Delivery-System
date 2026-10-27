@@ -1,3 +1,10 @@
+> **Integrated delivery module added:** The browser app (`run_ui.py`,
+> `Start Your Order.command` on macOS, or rebuilt `Your-Order-UI.pyz`) now uses
+> Mekno's real delivery, staff availability and allocation implementation.
+> See [Mekno module and demonstration guide](docs/MEKNO-MODULE.md).
+> The standalone console and its demo references described below remain a
+> Norin-only demonstration. Use fresh integrated data for the combined flow.
+
 # Norin's delivery request and quotation module
 
 Python implementation of Norin's five A2 classes for SWE30003 Assignment 3:

@@ -69,8 +69,9 @@ def main() -> None:
     evidence = root / "evidence"
     evidence.mkdir(exist_ok=True)
     env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
-    if not compileall.compile_dir(root / "norin_delivery", quiet=1):
-        raise SystemExit("Compilation failed")
+    for package in ("norin_delivery", "mekno_delivery", "tola_payment"):
+        if not compileall.compile_dir(root / package, quiet=1):
+            raise SystemExit("Compilation failed")
     if not compileall.compile_file(root / "run.py", quiet=1):
         raise SystemExit("Launcher compilation failed")
     if not compileall.compile_file(root / "run_ui.py", quiet=1):
@@ -95,7 +96,7 @@ def main() -> None:
         capture_output=True, text=True, encoding="utf-8", timeout=30,
     )
     (evidence / "automated-console-walkthrough.txt").write_text(
-        demo.stdout + demo.stderr, encoding="utf-8",
+        "\n".join(line.rstrip() for line in (demo.stdout + demo.stderr).splitlines()) + "\n", encoding="utf-8",
     )
     if demo.returncode:
         raise SystemExit(demo.stdout + demo.stderr)
@@ -105,14 +106,14 @@ def main() -> None:
             "__main__.py",
             "from norin_delivery.console import main\nraise SystemExit(main())\n",
         )
-        for source in sorted((root / "norin_delivery").rglob("*")):
+        for source in sorted(p for name in ("norin_delivery", "mekno_delivery", "tola_payment") for p in (root / name).rglob("*")):
             if source.suffix in (".py", ".html", ".css", ".js", ".svg"):
                 bundle.write(source, source.relative_to(root).as_posix())
     ui_archive = root / "Your-Order-UI.pyz"
     with zipfile.ZipFile(ui_archive, "w", zipfile.ZIP_DEFLATED) as bundle:
         bundle.writestr("__main__.py",
                         "from norin_delivery.web import main\nraise SystemExit(main())\n")
-        for source in sorted((root / "norin_delivery").rglob("*")):
+        for source in sorted(p for name in ("norin_delivery", "mekno_delivery", "tola_payment") for p in (root / name).rglob("*")):
             if source.suffix in (".py", ".html", ".css", ".js", ".svg"):
                 bundle.write(source, source.relative_to(root).as_posix())
     with tempfile.TemporaryDirectory() as folder:
@@ -136,7 +137,7 @@ def main() -> None:
         handle.write("\nAutomated console walkthrough: PASS\n")
         handle.write("Packaged .pyz first-run and restart smoke tests: PASS\n")
         handle.write("Packaged GUI HTTP assets, setup and shutdown smoke test: PASS\n")
-        handle.write("Rendered browser review: NOT COMPLETED (computer-use URL check blocked).\n")
+        handle.write("Rendered browser review: NOT PERFORMED by this packaging script.\n")
         handle.write("No real user data was used or modified in these checks.\n")
     separator = "-" * 70
     print(header + tests.stderr.split(separator)[-1])

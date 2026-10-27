@@ -87,6 +87,8 @@ class DeliveryApplication:
         if role not in (Role.MANAGER, Role.OFFICE, Role.DELIVERY):
             raise DomainError("Choose a staff role.")
         self._unique_username(username)
+        if role == Role.DELIVERY and hasattr(self.gateway, 'validate_staff'):
+            self.gateway.validate_staff(staff_id)
         account = UserAccount.register(username, password, role, staff_id=staff_id)
         records = deepcopy(self.repository.records)
         records.accounts[account.account_id] = account

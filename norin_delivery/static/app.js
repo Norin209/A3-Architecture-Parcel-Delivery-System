@@ -31,7 +31,7 @@ const date = value => value ? new Date(value).toLocaleString('en-AU', {day:'nume
 const shortId = id => `#${String(id).split('-').pop().slice(-6).toUpperCase()}`;
 const badge = status => `<span class="badge ${esc(status.toLowerCase())}">${esc(status)}</span>`;
 const brand = () => `<div class="brand"><span class="brand-mark">${icon('box')}</span><div><div class="brand-name">Your Order</div><div class="brand-caption">WE DELIVER</div></div></div>`;
-let state = {actor:null, requests:[], customers:[], quotes:[], accounts:[], view:'overview', filter:'All', search:'', authMode:'login'};
+let state = {actor:null, requests:[], customers:[], quotes:[], accounts:[], deliveries:[], delivery_staff:[], schedules:[], allocations:[], delivery_events:[], payments:[], view:'overview', filter:'All', search:'', authMode:'login'};
 let toastTimer;
 let afterCustomer = false;
 
@@ -95,11 +95,11 @@ function navigation(view, label, symbol, count=0) {
 
 function render() {
   if (!state.actor) { auth(); return; }
-  const titles = {overview:'Overview',requests:'Delivery requests',quotes:'Quotes',customers:'Customers',profile:'My details',accounts:'Team accounts'};
+  const titles = {overview:'Overview',requests:'Delivery requests',quotes:'Quotes',customers:'Customers',profile:'My details',accounts:'Team accounts',deliveries:'Deliveries',staff:'Staff & availability'};
   const actor = state.actor;
   const name = actor.role === 'Customer' ? customerName(actor.customer_id) : actor.username;
   const pending = state.quotes.filter(q => q.decision === 'Pending').length;
-  $('#app').innerHTML = `<aside class="sidebar">${brand()}<div class="nav-label">WORKSPACE</div><nav aria-label="Main navigation">${navigation('overview','Overview','grid')}${navigation('requests','Delivery requests','requests')}${navigation('quotes','Quotes','quote',pending)}${office() ? navigation('customers','Customers','users') : actor.role === 'Customer' ? navigation('profile','My details','user') : ''}${actor.role === 'Manager' ? navigation('accounts','Team accounts','shield') : ''}</nav><div class="sidebar-bottom"><div class="workspace-note"><strong><span class="dot"></span>All changes saved locally</strong>Pick up where you left off, whenever you’re ready.</div><div class="sidebar-profile flex"><span class="avatar">${esc(initials(name))}</span><div class="grow"><div class="username">${esc(name)}</div><div class="role">${esc(actor.role)}</div></div><button class="icon-button" data-action="logout" title="Sign out" aria-label="Sign out">${icon('logout')}</button></div></div></aside><div class="shell"><header class="topbar"><div class="flex"><button class="icon-button mobile-menu" data-action="menu" aria-label="Toggle navigation">${icon('menu')}</button><div class="breadcrumb">Workspace <span>/</span> <strong>${titles[state.view] || 'Overview'}</strong></div></div><div class="topbar-meta"><span class="local-label"><span></span>Local workspace</span><span class="topbar-date">${new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span><span class="avatar">${esc(initials(name))}</span></div></header><main id="main" class="main">${content()}<footer class="page-footer"><span>Your Order We Deliver · Melbourne</span><span>${state.demo_delivery ? 'Delivery handoff is in demo mode' : 'Connected delivery workspace'}</span></footer></main></div>`;
+  $('#app').innerHTML = `<aside class="sidebar">${brand()}<div class="nav-label">WORKSPACE</div><nav aria-label="Main navigation">${navigation('overview','Overview','grid')}${!state.demo_delivery ? navigation('deliveries','Deliveries','box') : ''}${!state.demo_delivery && actor.role !== 'Customer' ? navigation('staff','Staff & availability','users') : ''}${navigation('requests','Delivery requests','requests')}${navigation('quotes','Quotes','quote',pending)}${office() ? navigation('customers','Customers','users') : actor.role === 'Customer' ? navigation('profile','My details','user') : ''}${actor.role === 'Manager' ? navigation('accounts','Team accounts','shield') : ''}</nav><div class="sidebar-bottom"><div class="workspace-note"><strong><span class="dot"></span>All changes saved locally</strong>Pick up where you left off, whenever you’re ready.</div><div class="sidebar-profile flex"><span class="avatar">${esc(initials(name))}</span><div class="grow"><div class="username">${esc(name)}</div><div class="role">${esc(actor.role)}</div></div><button class="icon-button" data-action="logout" title="Sign out" aria-label="Sign out">${icon('logout')}</button></div></div></aside><div class="shell"><header class="topbar"><div class="flex"><button class="icon-button mobile-menu" data-action="menu" aria-label="Toggle navigation">${icon('menu')}</button><div class="breadcrumb">Workspace <span>/</span> <strong>${titles[state.view] || 'Overview'}</strong></div></div><div class="topbar-meta"><span class="local-label"><span></span>Local workspace</span><span class="topbar-date">${new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span><span class="avatar">${esc(initials(name))}</span></div></header><main id="main" class="main">${content()}<footer class="page-footer"><span>Your Order We Deliver · Melbourne</span><span>${state.demo_delivery ? 'Delivery handoff is in demo mode' : 'Connected delivery workspace'}</span></footer></main></div>`;
   if (actor.role === 'Manager') {
     $('.sidebar-bottom').insertAdjacentHTML('afterbegin', `<button class="nav-item" data-action="shutdown">${icon('power')}Close workspace</button>`);
   }
@@ -110,6 +110,9 @@ function heading(title, description, action='', label='', symbol='plus', eyebrow
 }
 
 function content() {
+  if (state.view === 'deliveries') return deliveriesPage();
+  if (state.view === 'staff') return staffPage();
+  if (state.actor.role === 'Delivery staff' && !state.demo_delivery) return deliveriesPage();
   if (state.actor.role === 'Delivery staff') {
     return heading('You’re signed in.','Your delivery staff account is ready for the group system.') + `<section class="panel">${empty('Delivery operations are not connected yet.','Staff allocation, pickup and completion will be available when the delivery module is connected.','','','box')}</section>`;
   }
@@ -235,6 +238,69 @@ function navigate(view) {
   render();
 }
 
+function deliveriesPage() {
+  const staffRole = state.actor.role === 'Delivery staff';
+  return heading('Deliveries', 'Accepted jobs, staff assignments and delivery progress.') +
+    `<section class="panel"><header class="panel-header"><h2>${staffRole ? 'My delivery jobs' : 'Delivery jobs'}</h2><span>${state.deliveries.length} deliveries</span></header>${state.deliveries.length ? `<div class="table-wrap"><table><thead><tr><th>Delivery</th><th>Route</th><th>Pickup / delivery</th><th>Status</th><th>Actions</th></tr></thead><tbody>${state.deliveries.map(d => {
+      const a = state.allocations.find(a => a.allocation_id === d.current_allocation_id);
+      const canOperate = office() || (staffRole && a?.staff_id === state.actor.staff_id);
+      return `<tr><td><strong>${shortId(d.delivery_id)}</strong><div class="table-secondary">${money(d.terms.amount)}</div></td><td>${route(d.terms)}</td><td>${esc(date(d.terms.estimated_pickup))}<br>${esc(date(d.terms.estimated_delivery))}</td><td>${badge(d.state)}<div class="table-secondary">${esc(state.delivery_staff.find(s => s.staff_id === a?.staff_id)?.display_name || '')}</div></td><td>${button('Details','delivery-details',{id:d.delivery_id,kind:'text'})}${office() && ['Allocated','Awaiting allocation'].includes(d.state) ? button(a ? 'Reassign' : 'Assign','delivery-assign',{id:d.delivery_id,kind:'text'}) : ''}${office() && a ? button('Release','delivery-release',{id:d.delivery_id,kind:'text'}) : ''}${canOperate && d.state === 'Allocated' ? button('Pick up','delivery-pickup',{id:d.delivery_id,kind:'text'}) : ''}${canOperate && d.state === 'In transit' ? button(d.payment_id ? 'Complete' : 'Record payment',d.payment_id ? 'delivery-complete' : 'delivery-payment',{id:d.delivery_id,kind:'text'}) : ''}</td></tr>`;
+    }).join('')}</tbody></table></div>` : empty('No delivery jobs yet.', staffRole ? 'Your assigned jobs will appear here.' : 'Accept a new quote to create a real delivery.')}</section>`;
+}
+
+function staffPage() {
+  return heading('Staff & availability','Set Melbourne local working periods before allocating jobs.',state.actor.role === 'Manager' ? 'delivery-new-staff' : '', 'Add delivery staff') +
+    `<section class="panel"><header class="panel-header"><h2>Delivery team</h2></header>${state.delivery_staff.length ? `<div class="table-wrap"><table><thead><tr><th>Name / staff ID</th><th>Contact</th><th>Status</th><th>Availability</th><th>Actions</th></tr></thead><tbody>${state.delivery_staff.map(s => `<tr><td><strong>${esc(s.display_name)}</strong><div class="table-secondary">${esc(s.staff_id)}</div></td><td>${esc(s.phone)}</td><td>${badge(s.active ? 'Active' : 'Inactive')}</td><td>${(state.schedules.find(x => x.staff_id === s.staff_id)?.periods || []).map(([a,b]) => `${esc(date(a))} – ${esc(date(b))}`).join('<br>') || 'No availability set'}</td><td>${button('Edit availability','delivery-schedule',{id:s.staff_id,kind:'text'})}${state.actor.role === 'Manager' ? button(s.active ? 'Deactivate' : 'Activate','delivery-active',{id:s.staff_id,kind:'text'}) : ''}</td></tr>`).join('')}</tbody></table></div>` : empty('No delivery staff yet.','A manager can create staff records here, then link them to delivery staff accounts.')}</section>`;
+}
+
+function deliveryForm(type, id) {
+  let title, description = '', body = '', extra = '';
+  const d = state.deliveries.find(d => d.delivery_id === id);
+  const s = state.delivery_staff.find(s => s.staff_id === id);
+  if (type === 'new-staff') {
+    title = 'Add delivery staff'; body = field('Full name','name',{required:true}) + field('Phone','phone',{required:true,type:'tel'});
+    type = 'staff';
+  } else if (type === 'schedule') {
+    title = `Availability for ${esc(s.display_name)}`;
+    description = 'One period per line: YYYY-MM-DD HH:MM / YYYY-MM-DD HH:MM. Empty removes availability.';
+    const value = (state.schedules.find(x => x.staff_id === id)?.periods || []).map(x => x.join(' / ')).join('\n');
+    body = `<div class="field"><label for="period-text">Working periods</label><textarea id="period-text" name="period_text" rows="7">${esc(value)}</textarea></div><div class="hint-box">Jobs outside the new availability will be released for reassignment. In-transit jobs must remain covered.</div>`;
+    type = 'availability'; extra = `<input type="hidden" name="staff_id" value="${esc(id)}">`;
+  } else if (type === 'assign') {
+    title = 'Allocate delivery staff'; description = 'Availability and overlapping jobs are checked when you save.';
+    body = `<div class="field"><label for="allocate-staff">Delivery staff</label><select id="allocate-staff" name="staff_id" required>${state.delivery_staff.filter(s => s.active).map(s => `<option value="${esc(s.staff_id)}">${esc(s.display_name)}</option>`).join('')}</select></div>${field('Reason (required for reassignment)','reason')}`;
+    type = 'allocate';
+  } else if (type === 'release') {
+    title = 'Release this assignment'; body = field('Reason','reason',{required:true});
+  } else if (type === 'payment') {
+    title = 'Record collected payment'; description = `Agreed amount: ${money(d.terms.amount)}. This records collection; no bank transaction is performed.`;
+    body = field('Amount collected (AUD)','amount',{required:true,value:d.terms.amount});
+  } else if (type === 'active') {
+    title = s.active ? 'Deactivate delivery staff?' : 'Activate delivery staff?';
+    body = '<div class="hint-box">Deactivation releases jobs before pickup. An in-transit assignment prevents deactivation.</div>';
+    extra = `<input type="hidden" name="staff_id" value="${esc(id)}"><input type="hidden" name="active" value="${!s.active}">`;
+  } else {
+    title = type === 'pickup' ? 'Confirm parcel pickup?' : 'Confirm delivery completion?';
+    description = type === 'pickup' ? 'Confirm that the assigned staff member collected the parcels.' : 'Confirm that the parcels reached their destination. The agreed payment must already be recorded.';
+  }
+  dialog(title, description, `<form data-form="delivery-${type}">${formError()}<input type="hidden" name="delivery_id" value="${esc(d?.delivery_id || '')}">${extra}${body}${footer('Confirm')}</form>`);
+}
+
+function deliveryDetails(id) {
+  const d = state.deliveries.find(x => x.delivery_id === id);
+  const history = state.allocations.filter(x => x.delivery_id === id);
+  dialog(`Delivery ${shortId(id)}`,'Accepted terms and retained allocation history.', `${badge(d.state)}<div class="detail-meta"><div><small>Pickup</small><p>${esc(d.terms.pickup_address)}</p></div><div><small>Destination</small><p>${esc(d.terms.destination_address)}</p></div><div><small>Pickup estimate</small><p>${esc(date(d.terms.estimated_pickup))}</p></div><div><small>Delivery estimate</small><p>${esc(date(d.terms.estimated_delivery))}</p></div></div><h3>Parcels</h3><ul>${d.terms.parcels.map(p => `<li>${esc(p[1])}</li>`).join('')}</ul><p>Agreed amount: ${money(d.terms.amount)} · Payment ${d.payment_id ? 'recorded' : 'pending'}</p><h3>Allocation history</h3>${history.map(a => `<p>${esc(state.delivery_staff.find(s => s.staff_id === a.staff_id)?.display_name || a.staff_id)} · ${a.current ? 'Current' : esc(a.end_reason)}<br><small>${esc(date(a.assigned_at))}${a.ended_at ? ` → ${esc(date(a.ended_at))}` : ''}</small></p>`).join('') || '<p>No visible staff allocations.</p>'}<h3>Activity</h3>${state.delivery_events.filter(e => e.delivery_id === id).map(e => `<p>${esc(e.action)} · ${esc(date(e.at))}${e.note ? `<br><small>${esc(e.note)}</small>` : ''}</p>`).join('')}<div class="form-footer">${button('Close','close',{kind:'secondary'})}</div>`);
+}
+
+document.addEventListener('click', event => {
+  const target = event.target.closest('[data-action]');
+  if (!target?.dataset.action.startsWith('delivery-')) return;
+  const type = target.dataset.action.slice(9);
+  if (type === 'details') deliveryDetails(target.dataset.id);
+  else deliveryForm(type, target.dataset.id);
+});
+
+
 document.addEventListener('click', async event => {
   const target = event.target.closest('[data-action]');
   if (!target) return;
@@ -303,6 +369,11 @@ document.addEventListener('submit', async event => {
   errorBox.textContent = '';
   const endpoints = {setup:'/api/setup',login:'/api/login',register:'/api/register',customer:'/api/customers','customer-update':'/api/customers/update',quote:'/api/quotes',decision:'/api/quotes/decision',account:'/api/accounts',deactivate:'/api/accounts/deactivate',shutdown:'/api/shutdown'};
   let endpoint = endpoints[type];
+  if (type.startsWith('delivery-')) {
+    endpoint = '/api/delivery/' + type.slice(9);
+    if (type === 'delivery-availability') data.periods = data.period_text.trim() ? data.period_text.split('\n').filter(x => x.trim()).map(x => x.split('/').map(v => v.trim().replace('T',' '))) : [];
+    if (type === 'delivery-active') data.active = data.active === 'true';
+  }
   if (type === 'request') {
     data.parcels = [...form.querySelectorAll('.parcel-row')].map(row => ({parcel_id:row.dataset.id,description:$('input',row).value})).filter(p => p.parcel_id || p.description.trim());
     endpoint = data.request_id ? '/api/requests/save' : '/api/requests';
