@@ -75,8 +75,31 @@ Coordinate rollback if staff creation succeeds but account creation fails.
 
 Payment and status operations begin on the actual Delivery returned by Mekno's
 adapter. The handoff includes accepted terms for payment checking and audit
-information for the initial status. Tola's implementation must retain its own
-payment/status history; Norin's module does not create those records.
+information for the initial status. Norin's module does not create Tola's
+payment/status records.
+
+The standalone payment-domain model is `tola_payment.Payment`:
+
+```python
+from tola_payment import Payment
+
+payment = Payment.record_collection(
+    delivery_id=delivery_id,  # The stable ID returned by Mekno's Delivery module.
+    accepted_quote=accepted_quote,  # The accepted quote retained by the integration.
+    amount_received="45.50",
+)
+if payment.comparison_result.value == "Mismatch":
+    # Keep the recorded mismatch visible for operational follow-up.
+    ...
+```
+
+`accepted_quote` must be accepted and its delivery ID must match the supplied
+delivery. The immutable record keeps the received amount, accepted amount,
+quote/delivery IDs and timezone-aware collection time; the comparison is
+derived from those values. This is a domain record only: the caller must retain
+it. It does not yet add persistence, a UI workflow, bank processing, partial-
+payment rules or duplicate-entry protection. Those decisions and the actual
+Delivery API must be agreed before end-to-end integration.
 
 The shared initializer should construct repositories/adapters before enabling
 normal menus. No external payment service is required by A3.

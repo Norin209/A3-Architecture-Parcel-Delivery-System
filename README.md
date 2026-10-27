@@ -43,8 +43,9 @@ For a separate practice workspace:
 python run_ui.py --data data/practice.json --port 8788
 ```
 
-The delivery handoff is still the labelled demo adapter. UI styling does not
-add Mekno's actual delivery or Tola's payment/status implementation.
+The delivery handoff is still the labelled demo adapter. Tola's standalone
+payment record model is not yet wired to a persisted Delivery or UI workflow;
+status and reporting implementations are still outstanding.
 
 ## Console version
 
@@ -128,13 +129,18 @@ and verification of the actual `DeliveryStaff` record belong to Mekno's module.
 | `norin_delivery/console.py` | Console input, menus and presentation |
 | `norin_delivery/web.py` | Local HTTP API, sessions and browser startup |
 | `norin_delivery/static/` | Browser layout, styles and interactions |
+| `tola_payment/payment.py` | Immutable payment record and accepted-quote comparison |
 | `tests/test_module.py` | Automated business and failure-path tests |
+| `tests/test_payment.py` | Payment-record validation and comparison tests |
 | `tests/test_web.py` | API isolation, form saves, validation and access tests |
 | `scripts/demo_console.py` | Repeatable console walkthrough using temporary data |
 
 The layers are browser -> local API -> application service -> domain/storage/integration.
 The console also calls the same application service directly.
 The domain classes do not import the console or JSON repository.
+`tola_payment.Payment` is a separate domain contribution; its caller must retain
+returned records. It does not yet provide storage, a user workflow, bank
+processing, partial-payment rules or duplicate-entry protection.
 
 ## Verification
 
