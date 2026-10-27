@@ -27,8 +27,8 @@ in the integrated workspace. Existing real customer files were not used in tests
 
 1. Create the first manager and sign in.
 2. Open **Staff & availability**, add two delivery staff records, and record
-   working periods covering the planned pickup and delivery times. Each line
-   uses `2026-11-01 08:00 / 2026-11-01 18:00`.
+   working periods covering the planned pickup and delivery times. Use **Add
+   working period** and choose a start and end time for each shift.
 3. In **Team accounts**, create delivery-staff accounts using the staff IDs
    displayed in the directory. Unknown/inactive IDs are rejected.
 4. Add a phone customer and request with parcels. Submit the request, then

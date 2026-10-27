@@ -98,9 +98,9 @@ class WebTests(unittest.TestCase):
                         raise
                     time.sleep(0.05)
 
-        rejected("/api/bootstrap", headers={"Host": "evil.example"})
+        rejected("/api/bootstrap", headers={"Host": "another.invalid"})
         rejected("/api/logout", {}, {"X-CSRF-Token": "wrong"})
-        rejected("/api/logout", {}, {"Origin": "https://evil.example"})
+        rejected("/api/logout", {}, {"Origin": "https://another.invalid"})
 
     def test_manager_setup_does_not_expose_password_hashes(self):
         result = self.manager()

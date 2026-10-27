@@ -18,6 +18,11 @@ Double-click **Start Your Order.vbs**. The Python app opens a local browser
 workspace with no command-line window. It runs at `http://127.0.0.1:8787`.
 Opening the launcher again reopens the same running workspace.
 
+For a two-role demonstration in one browser, sign in as the manager at
+`http://127.0.0.1:8787` and as the customer at `http://localhost:8787`.
+The browser keeps separate login cookies for these hostnames. Refresh a tab
+to see changes made in the other tab.
+
 The interface includes a dashboard, searchable/filterable request and quote
 tables, request forms with editable parcel rows, quote review/decision dialogs,
 customer contact forms, and manager account controls. Menus follow the signed-in

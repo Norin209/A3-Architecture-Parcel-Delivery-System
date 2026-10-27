@@ -34,6 +34,7 @@ const brand = () => `<div class="brand"><span class="brand-mark">${icon('box')}<
 let state = {actor:null, requests:[], customers:[], quotes:[], accounts:[], deliveries:[], delivery_staff:[], schedules:[], allocations:[], delivery_events:[], payments:[], view:'overview', filter:'All', search:'', authMode:'login'};
 let toastTimer;
 let afterCustomer = false;
+let availabilityRowId = 0;
 
 async function api(path, data) {
   const options = {headers:{}, credentials:'same-origin'};
@@ -259,6 +260,13 @@ function staffPage() {
     `<section class="panel"><header class="panel-header"><h2>Delivery team</h2></header>${state.delivery_staff.length ? `<div class="table-wrap"><table><thead><tr><th>Name / staff ID</th><th>Contact</th><th>Status</th><th>Availability</th><th>Actions</th></tr></thead><tbody>${state.delivery_staff.map(s => `<tr><td><strong>${esc(s.display_name)}</strong><div class="table-secondary">${esc(s.staff_id)}</div></td><td>${esc(s.phone)}</td><td>${badge(s.active ? 'Active' : 'Inactive')}</td><td>${(state.schedules.find(x => x.staff_id === s.staff_id)?.periods || []).map(([a,b]) => `${esc(date(a))} – ${esc(date(b))}`).join('<br>') || 'No availability set'}</td><td>${button('Edit availability','delivery-schedule',{id:s.staff_id,kind:'text'})}${state.actor.role === 'Manager' ? button(s.active ? 'Deactivate' : 'Activate','delivery-active',{id:s.staff_id,kind:'text'}) : ''}</td></tr>`).join('')}</tbody></table></div>` : empty('No delivery staff yet.','A manager can create staff records here, then link them to delivery staff accounts.')}</section>`;
 }
 
+function availabilityRow(period = ['', '']) {
+  const rowId = ++availabilityRowId;
+  const start = esc((period[0] || '').replace(' ', 'T'));
+  const end = esc((period[1] || '').replace(' ', 'T'));
+  return `<div class="availability-row"><div class="field"><label for="availability-start-${rowId}">Start</label><input id="availability-start-${rowId}" type="datetime-local" data-start value="${start}"></div><div class="field"><label for="availability-end-${rowId}">End</label><input id="availability-end-${rowId}" type="datetime-local" data-end value="${end}"></div>${button('Remove','remove-availability-period',{kind:'text',extra:'aria-label="Remove working period"'})}</div>`;
+}
+
 function deliveryForm(type, id) {
   let title, description = '', body = '', extra = '';
   const d = state.deliveries.find(d => d.delivery_id === id);
@@ -268,9 +276,9 @@ function deliveryForm(type, id) {
     type = 'staff';
   } else if (type === 'schedule') {
     title = `Availability for ${esc(s.display_name)}`;
-    description = 'One period per line: YYYY-MM-DD HH:MM / YYYY-MM-DD HH:MM. Empty removes availability.';
-    const value = (state.schedules.find(x => x.staff_id === id)?.periods || []).map(x => x.join(' / ')).join('\n');
-    body = `<div class="field"><label for="period-text">Working periods</label><textarea id="period-text" name="period_text" rows="7">${esc(value)}</textarea></div><div class="hint-box">Jobs outside the new availability will be released for reassignment. In-transit jobs must remain covered.</div>`;
+    description = 'Choose start and end times in Melbourne local time.';
+    const periods = state.schedules.find(x => x.staff_id === id)?.periods || [];
+    body = `<div id="availability-periods">${(periods.length ? periods : [['', '']]).map(availabilityRow).join('')}</div>${button('Add working period','add-availability-period',{kind:'secondary',symbol:'plus'})}<div class="hint-box availability-note">Remove every period and save to clear availability. Jobs outside the new availability will be released for reassignment. In-transit jobs must remain covered.</div>`;
     type = 'availability'; extra = `<input type="hidden" name="staff_id" value="${esc(id)}">`;
   } else if (type === 'assign') {
     title = 'Allocate delivery staff'; description = 'Availability and overlapping jobs are checked when you save.';
@@ -348,6 +356,13 @@ document.addEventListener('click', async event => {
         break;
       }
       case 'remove-parcel': target.closest('.parcel-row').remove(); break;
+      case 'add-availability-period':
+        if ($('#availability-periods').children.length < 100) {
+          $('#availability-periods').insertAdjacentHTML('beforeend', availabilityRow());
+          $('#availability-periods').lastElementChild.querySelector('[data-start]').focus();
+        } else notify('No more than 100 working periods are allowed.');
+        break;
+      case 'remove-availability-period': target.closest('.availability-row').remove(); break;
     }
   } catch (error) { notify(error.message); }
 });
@@ -378,7 +393,20 @@ document.addEventListener('submit', async event => {
   let endpoint = endpoints[type];
   if (type.startsWith('delivery-')) {
     endpoint = '/api/delivery/' + type.slice(9);
-    if (type === 'delivery-availability') data.periods = data.period_text.trim() ? data.period_text.split('\n').filter(x => x.trim()).map(x => x.split('/').map(v => v.trim().replace('T',' '))) : [];
+    if (type === 'delivery-availability') {
+      data.periods = [];
+      for (const row of form.querySelectorAll('.availability-row')) {
+        const start = row.querySelector('[data-start]').value;
+        const end = row.querySelector('[data-end]').value;
+        if (!start && !end) continue;
+        if (!start || !end || end <= start) {
+          errorBox.textContent = 'Each working period needs a start and an end after the start.';
+          errorBox.focus();
+          return;
+        }
+        data.periods.push([start.replace('T',' '), end.replace('T',' ')]);
+      }
+    }
     if (type === 'delivery-active') data.active = data.active === 'true';
   }
   if (type === 'request') {
