@@ -1,0 +1,52 @@
+Verified at 2026-10-27T06:59:27.790065+00:00
+Python 3.11.16 on Windows-10-10.0.26300-SP0
+compileall: PASS (Python bytecode compilation)
+test_acceptance_is_idempotent_even_after_restart (test_module.ModuleTests.test_acceptance_is_idempotent_even_after_restart) ... ok
+test_accepted_quote_cannot_be_rejected (test_module.ModuleTests.test_accepted_quote_cannot_be_rejected) ... ok
+test_blank_parcel_and_missing_parcel_fail (test_module.ModuleTests.test_blank_parcel_and_missing_parcel_fail) ... ok
+test_broken_relationship_is_rejected_on_load (test_module.ModuleTests.test_broken_relationship_is_rejected_on_load) ... ok
+test_console_login_cancel_and_exit (test_module.ModuleTests.test_console_login_cancel_and_exit) ... ok
+test_corrupt_saved_price_reports_storage_error (test_module.ModuleTests.test_corrupt_saved_price_reports_storage_error) ... ok
+test_corrupted_file_is_not_overwritten (test_module.ModuleTests.test_corrupted_file_is_not_overwritten) ... ok
+test_customer_cannot_prepare_quote (test_module.ModuleTests.test_customer_cannot_prepare_quote) ... ok
+test_customer_cannot_read_or_change_another_customer (test_module.ModuleTests.test_customer_cannot_read_or_change_another_customer) ... ok
+test_data_round_trip_restores_objects_and_decimals (test_module.ModuleTests.test_data_round_trip_restores_objects_and_decimals) ... ok
+test_deactivated_account_cannot_use_existing_session (test_module.ModuleTests.test_deactivated_account_cannot_use_existing_session) ... ok
+test_delivery_staff_requires_nonblank_external_staff_id (test_module.ModuleTests.test_delivery_staff_requires_nonblank_external_staff_id) ... ok
+test_draft_editing_and_last_parcel_removal (test_module.ModuleTests.test_draft_editing_and_last_parcel_removal) ... ok
+test_failed_handoff_leaves_quote_pending (test_module.ModuleTests.test_failed_handoff_leaves_quote_pending) ... ok
+test_failed_save_preserves_memory_and_file (test_module.ModuleTests.test_failed_save_preserves_memory_and_file) ... ok
+test_first_manager_cannot_be_reset (test_module.ModuleTests.test_first_manager_cannot_be_reset) ... ok
+test_invalid_login_clears_previous_session (test_module.ModuleTests.test_invalid_login_clears_previous_session) ... ok
+test_invalid_quote_terms_leave_request_draft (test_module.ModuleTests.test_invalid_quote_terms_leave_request_draft) ... ok
+test_manager_only_account_actions_and_history_retention (test_module.ModuleTests.test_manager_only_account_actions_and_history_retention) ... ok
+test_other_customer_cannot_decide_even_after_acceptance (test_module.ModuleTests.test_other_customer_cannot_decide_even_after_acceptance) ... ok
+test_passwords_are_hashed (test_module.ModuleTests.test_passwords_are_hashed) ... ok
+test_phone_customer_needs_no_account (test_module.ModuleTests.test_phone_customer_needs_no_account) ... ok
+test_quoted_request_and_quote_terms_are_locked (test_module.ModuleTests.test_quoted_request_and_quote_terms_are_locked) ... ok
+test_registration_validation_is_atomic (test_module.ModuleTests.test_registration_validation_is_atomic) ... ok
+test_rejection_never_creates_delivery (test_module.ModuleTests.test_rejection_never_creates_delivery) ... ok
+test_save_failure_after_handoff_can_retry_without_duplicate (test_module.ModuleTests.test_save_failure_after_handoff_can_retry_without_duplicate) ... ok
+test_usernames_are_case_insensitive (test_module.ModuleTests.test_usernames_are_case_insensitive) ... ok
+test_assets_are_served_without_external_dependencies (test_web.WebTests.test_assets_are_served_without_external_dependencies) ... ok
+test_customer_cannot_access_other_customers_requests (test_web.WebTests.test_customer_cannot_access_other_customers_requests) ... ok
+test_health_identifies_workspace_without_exposing_path (test_web.WebTests.test_health_identifies_workspace_without_exposing_path) ... ok
+test_host_origin_and_csrf_are_enforced (test_web.WebTests.test_host_origin_and_csrf_are_enforced) ... ok
+test_invalid_form_types_return_validation_errors (test_web.WebTests.test_invalid_form_types_return_validation_errors) ... ok
+test_manager_can_close_server_without_deleting_records (test_web.WebTests.test_manager_can_close_server_without_deleting_records) ... ok
+test_manager_setup_does_not_expose_password_hashes (test_web.WebTests.test_manager_setup_does_not_expose_password_hashes) ... ok
+test_private_records_require_login (test_web.WebTests.test_private_records_require_login) ... ok
+test_quote_form_validation_and_decision (test_web.WebTests.test_quote_form_validation_and_decision) ... ok
+test_registration_and_browser_sessions_are_isolated (test_web.WebTests.test_registration_and_browser_sessions_are_isolated) ... ok
+test_whole_request_form_saves_atomically_and_preserves_parcel_ids (test_web.WebTests.test_whole_request_form_saves_atomically_and_preserves_parcel_ids) ... ok
+
+----------------------------------------------------------------------
+Ran 38 tests in 17.155s
+
+OK
+
+Automated console walkthrough: PASS
+Packaged .pyz first-run and restart smoke tests: PASS
+Packaged GUI HTTP assets, setup and shutdown smoke test: PASS
+Rendered browser review: NOT COMPLETED (computer-use URL check blocked).
+No real user data was used or modified in these checks.
