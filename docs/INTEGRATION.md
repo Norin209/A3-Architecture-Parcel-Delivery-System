@@ -5,7 +5,7 @@
 
 # Connecting Norin's module to the group system
 
-## Boundary for Mekno
+## Implemented boundary for Mekno
 
 Implement `DeliveryGateway.create_or_get_delivery(data)` and pass your adapter
 to `DeliveryApplication`. This method receives an immutable
@@ -26,8 +26,8 @@ record as your module requires; no allocation occurs in Norin's module.
 from norin_delivery.service import DeliveryApplication
 from norin_delivery.storage import JsonRepository
 
-# Implement this adapter using Mekno's actual repository and Delivery API.
-# This is the integration contract, not a claim about existing teammate code.
+# Contract example only; the browser app's production bootstrap uses
+# mekno_delivery.MeknoGateway with the SQLite-backed repository.
 class MeknoGateway:
     def __init__(self, delivery_service):
         self.delivery_service = delivery_service
@@ -71,19 +71,23 @@ previous demo acceptances as real deliveries.
 ## Accounts and staff records
 
 The initial manager can create office, manager and delivery-staff accounts.
-For delivery staff, Mekno's workflow must create/identify a real `DeliveryStaff`
-record and pass its ID into `register_staff_account`. The standalone module
-requires a nonblank ID but cannot verify a record in an unconnected module.
-Coordinate rollback if staff creation succeeds but account creation fails.
+In the integrated browser workspace, a manager creates/identifies a real
+`DeliveryStaff` record in **Staff & availability**, then links its ID when
+creating the delivery-staff account. The web workflow validates that the ID
+exists and is active. `DeliveryApplication.register_staff_account` by itself
+only validates that an ID is present; other bootstraps must provide equivalent
+record validation. Staff creation and account creation are separate saves, so
+coordinate recovery if the second operation fails.
 
 ## Boundary for Tola
 
-Payment and status operations begin on the actual Delivery returned by Mekno's
-adapter. The handoff includes accepted terms for payment checking and audit
-information for the initial status. Norin's module does not create Tola's
-payment/status records.
+The integrated browser workspace starts `DeliveryOperations` alongside
+`MeknoGateway`. Quote acceptance creates or reuses the actual persisted
+`Delivery`; the assigned delivery staff member can record pickup, collect the
+agreed payment, and complete the delivery. Norin's request/quote service does
+not itself perform these later delivery operations.
 
-The standalone payment-domain model is `tola_payment.Payment`:
+The payment-domain model is `tola_payment.Payment`:
 
 ```python
 from tola_payment import Payment
@@ -94,17 +98,21 @@ payment = Payment.record_collection(
     amount_received="45.50",
 )
 if payment.comparison_result.value == "Mismatch":
-    # Keep the recorded mismatch visible for operational follow-up.
+    # The integrated delivery workflow rejects mismatches before persistence.
     ...
 ```
 
 `accepted_quote` must be accepted and its delivery ID must match the supplied
 delivery. The immutable record keeps the received amount, accepted amount,
 quote/delivery IDs and timezone-aware collection time; the comparison is
-derived from those values. This is a domain record only: the caller must retain
-it. It does not yet add persistence, a UI workflow, bank processing, partial-
-payment rules or duplicate-entry protection. Those decisions and the actual
-Delivery API must be agreed before end-to-end integration.
+derived from those values. The `Payment` object itself does not persist. The
+integrated `DeliveryOperations.collect_payment` path stores it in Mekno's
+SQLite repository, permits one exact collection after pickup, and requires
+payment before completion. This is not a bank transaction; partial payments
+and refunds are outside the current policy. The database also keeps technical
+lifecycle events, but this is not the complete `StatusEvent`/reporting domain
+contribution. Standalone callers must persist returned payment records
+themselves.
 
 The shared initializer should construct repositories/adapters before enabling
 normal menus. No external payment service is required by A3.

@@ -1,6 +1,7 @@
 > **Integrated delivery module added:** The browser app (`run_ui.py`,
 > `Start Your Order.command` on macOS, or rebuilt `Your-Order-UI.pyz`) now uses
-> Mekno's real delivery, staff availability and allocation implementation.
+> Mekno's real delivery, staff availability/allocation, pickup, payment-collection,
+> and completion workflow.
 > See [Mekno module and demonstration guide](docs/MEKNO-MODULE.md).
 > The standalone console and its demo references described below remain a
 > Norin-only demonstration. Use fresh integrated data for the combined flow.
@@ -58,9 +59,13 @@ For a separate practice workspace:
 python run_ui.py --data data/practice.json --port 8788
 ```
 
-The delivery handoff is still the labelled demo adapter. Tola's standalone
-payment record model is not yet wired to a persisted Delivery or UI workflow;
-status and reporting implementations are still outstanding.
+In the browser workspace, accepted quotes use `MeknoGateway`; the delivery,
+staff, allocation, pickup, payment-collection and completion workflow is
+integrated. That workflow uses `tola_payment.Payment` and persists its record
+in Mekno's SQLite store. This records collection only: it does not process a
+bank transaction or support partial payments or refunds. The standalone console
+still uses `DemoDeliveryGateway`. Technical lifecycle events are saved, but
+Tola's complete `StatusEvent` and reporting contributions remain outstanding.
 
 ## Console version
 
