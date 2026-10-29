@@ -4,7 +4,3 @@ data/
 build/
 dist/
 .venv/
-evidence/capture-*/demo-records.json
-evidence/capture-*/demo-records.delivery.sqlite3
-evidence/capture-*/demo-records.delivery.sqlite3-shm
-evidence/capture-*/demo-records.delivery.sqlite3-wal
