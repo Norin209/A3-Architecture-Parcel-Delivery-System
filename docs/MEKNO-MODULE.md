@@ -27,19 +27,21 @@ in the integrated workspace. Existing real customer files were not used in tests
 
 1. Create the first manager and sign in.
 2. Open **Staff & availability**, add two delivery staff records, and record
-   weekly working hours covering the planned pickup and delivery times. Tick
+   weekly working hours covering their respective pickup and delivery times. Tick
    the relevant Monday-Sunday days and enter clock-in and clock-out times.
 3. In **Team accounts**, create delivery-staff accounts using the staff IDs
    displayed in the directory. Unknown/inactive IDs are rejected.
 4. Add a phone customer and request with parcels. Submit the request, then
    prepare a quote and record the customer's acceptance.
-5. Open **Deliveries**, assign the job to the first driver, then reassign to
-   the second with a reason. **Details** shows both allocation records.
+5. Assign pickup staff, then have that staff member confirm pickup. The job
+   becomes **Awaiting delivery assignment**. Assign delivery staff, who may be
+   a different person. **Details** shows both allocation records.
 6. Demonstrate rejection of overlapping jobs or staff outside their shifts.
    Removing availability releases affected jobs before pickup. If no replacement
    is eligible, the job remains **Awaiting allocation** until office staff assign one.
-7. Sign in as the current driver: pick up, record the exact accepted payment,
-   and complete the delivery. A different driver cannot operate the job.
+7. Sign in as the delivery driver: record the exact accepted payment and
+   complete the delivery. A driver without the current allocation cannot
+   operate the job.
 8. Restart the app with the same data path to show retained deliveries,
    schedules, payment, activity and allocation history.
 
@@ -65,21 +67,20 @@ The browser uses the existing local HTTP server and existing page styles.
   current jobs. Customers see their own deliveries without staff directories.
 - Weekly availability repeats every Monday-Sunday. One shift can be entered per
   day. A clock-out earlier than clock-in means the shift ends the next day.
-  Shifts cannot overlap, but adjacent shifts may jointly cover a job.
-  For a same-day delivery, availability covers the whole quoted interval.
-  For a delivery spanning dates, the assigned staff member must be on shift at
-  pickup and delivery and have a shift on every service date. Off-duty hours
-  between shifts are paused; one assignment remains current throughout the job.
-  There is no facility handoff or second driver. Other jobs whose quoted
-  intervals overlap still conflict, even during an off-duty overnight pause.
-  Job intervals are half open, allowing consecutive jobs at the same boundary.
+  Shifts cannot overlap. Pickup allocation checks only the estimated pickup
+  time; after pickup, delivery allocation checks only the estimated delivery
+  time. The pickup assignment ends when pickup is confirmed. Staff must be
+  active and free of a conflicting current job at the relevant time. The
+  prototype has no route-duration estimate, facility, or parcel handoff record;
+  the team must coordinate physical transfer outside the app.
 - Dated schedules saved by the earlier version remain readable until a user
   replaces them in the weekly-hours form. They do not silently become recurring.
 - Reassignment requires a reason and retains the previous allocation. Failed
   reassignment rolls back both release and creation. At most one allocation is
   current per delivery through the transactional service.
 - Availability removal/deactivation releases affected pre-pickup jobs. In-transit
-  jobs prevent such changes. Reassignment after pickup is not supported.
+  jobs prevent such changes until office staff reassign the delivery stage with
+  a reason. Earlier allocations remain as history.
 - Payment uses Tola's existing `Payment.record_collection`. The initial policy
   accepts one exact collection after pickup. Partial payments, refunds and real
   bank transactions are outside this module. Completion requires that payment.

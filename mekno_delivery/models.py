@@ -100,25 +100,17 @@ class AvailabilitySchedule:
                 return True
         return False
 
-    def covers_delivery(self, pickup: str, delivery: str) -> bool:
-        first, last = period(pickup, delivery)
-        if first.date() == last.date():
-            return self.covers(pickup, delivery)
-        windows = self._windows(first, last)
-        if not any(left <= first < right for left, right in windows):
-            return False
-        if not any(left <= last <= right for left, right in windows):
-            return False
-        # Off-duty hours between shifts are a pause, not unavailable work time.
-        # The same staff member must have a shift on every service date.
-        day = first.date()
-        while day <= last.date():
-            day_start = datetime.combine(day, time.min)
-            day_end = day_start + timedelta(days=1)
-            if not any(left < day_end and day_start < right for left, right in windows):
-                return False
-            day += timedelta(days=1)
-        return True
+    def available_at(self, when: str, *, delivery: bool = False) -> bool:
+        try:
+            moment = datetime.fromisoformat(when)
+            if moment.tzinfo is not None:
+                raise ValueError
+        except (ValueError, TypeError) as exc:
+            raise DomainError('Use a Melbourne local pickup or delivery time.') from exc
+        windows = self._windows(moment, moment + timedelta(minutes=1))
+        # A delivery can finish exactly at clock-out; pickup needs time to start.
+        return any(left <= moment <= right if delivery else left <= moment < right
+                   for left, right in windows)
 
     def _windows(self, first: datetime, last: datetime):
         if self.legacy_periods:
@@ -148,8 +140,8 @@ class DeliveryStaff:
         required(self.display_name, 'Staff name')
         required(self.phone, 'Phone')
 
-    def eligible(self, schedule: AvailabilitySchedule, start: str, end: str) -> bool:
-        return self.active and schedule.staff_id == self.staff_id and schedule.covers_delivery(start, end)
+    def eligible(self, schedule: AvailabilitySchedule, when: str, *, delivery: bool = False) -> bool:
+        return self.active and schedule.staff_id == self.staff_id and schedule.available_at(when, delivery=delivery)
 
 
 @dataclass(frozen=True)
@@ -163,9 +155,12 @@ class StaffAllocation:
     assigned_at: str
     ended_at: str | None = None
     end_reason: str = ''
+    phase: str = 'Whole job'  # Existing records retain their original meaning.
 
     def __post_init__(self):
         period(self.start, self.end)
+        if self.phase not in ('Whole job', 'Pickup', 'Delivery'):
+            raise DomainError('Choose a valid allocation phase.')
 
     @property
     def current(self) -> bool:
@@ -175,6 +170,11 @@ class StaffAllocation:
         first, last = period(start, end)
         own_start, own_end = period(self.start, self.end)
         return self.current and first < own_end and own_start < last
+
+    def conflicts_at(self, when: str) -> bool:
+        moment = datetime.fromisoformat(when)
+        own_start, own_end = period(self.start, self.end)
+        return self.current and own_start <= moment < own_end
 
 
 @dataclass(frozen=True)

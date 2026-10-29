@@ -15,3 +15,4 @@ dialog{border:1px solid #e2e8dc;border-radius:15px;padding:0;max-width:650px;wid
 @media(max-width:740px){.availability-day-row{grid-template-columns:1fr 1fr;gap:9px;padding:12px}.availability-day{grid-column:1/-1;min-height:24px}.staff-actions{flex-wrap:nowrap}}
 .delivery-actions-cell{min-width:205px;padding:13px 18px}.table-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.table-actions .btn{padding:8px 11px}
 @media(max-width:740px){.delivery-actions-cell{min-width:180px}}
+.badge.completed{background:#dcefe2;color:#286a42}.badge.allocated,.badge.in-transit{background:#e8eff7;color:#426a87}.badge.awaiting-allocation,.badge.awaiting-delivery-assignment{background:#f1f1eb;color:#697568}

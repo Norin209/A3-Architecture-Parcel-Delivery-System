@@ -1,6 +1,7 @@
 """Behavioural checks for Mekno's module and the real Norin handoff."""
 import tempfile
 import unittest
+import json
 from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
@@ -45,25 +46,19 @@ class WeeklyAvailabilityTests(unittest.TestCase):
         self.assertTrue(schedule.covers('2026-11-01 09:00', '2026-11-01 11:00'))
         self.assertFalse(schedule.covers('2026-11-08 09:00', '2026-11-08 11:00'))
 
-    def test_delivery_across_days_pauses_outside_working_hours(self):
+    def test_pickup_and_delivery_availability_are_separate(self):
         shifts = AvailabilitySchedule('staff', (
             ('Thursday', '07:00', '23:00'),
             ('Friday', '07:00', '23:00'),
         ))
         self.assertFalse(shifts.covers('2026-10-29 16:00', '2026-10-30 18:00'))
-        self.assertTrue(shifts.covers_delivery('2026-10-29 16:00', '2026-10-30 18:00'))
-        self.assertTrue(shifts.covers_delivery('2026-10-29 16:00', '2026-10-29 18:00'))
-        self.assertFalse(shifts.covers_delivery('2026-10-29 06:00', '2026-10-30 18:00'))
-        self.assertFalse(shifts.covers_delivery('2026-10-29 16:00', '2026-10-30 23:30'))
-        self.assertFalse(shifts.covers_delivery('2026-10-29 22:00', '2026-10-29 23:30'))
-        self.assertFalse(shifts.covers_delivery('2026-10-29 16:00', '2026-10-31 18:00'))
-
-    def test_delivery_across_days_requires_each_service_day(self):
-        shifts = AvailabilitySchedule('staff', (
-            ('Thursday', '07:00', '23:00'),
-            ('Saturday', '07:00', '23:00'),
-        ))
-        self.assertFalse(shifts.covers_delivery('2026-10-29 16:00', '2026-10-31 18:00'))
+        self.assertTrue(shifts.available_at('2026-10-29 16:00'))
+        self.assertTrue(shifts.available_at('2026-10-30 18:00', delivery=True))
+        self.assertFalse(shifts.available_at('2026-10-28 05:57'))
+        self.assertFalse(shifts.available_at('2026-10-29 06:00'))
+        self.assertFalse(shifts.available_at('2026-10-30 23:30', delivery=True))
+        self.assertFalse(shifts.available_at('2026-10-29 23:00'))
+        self.assertTrue(shifts.available_at('2026-10-30 23:00', delivery=True))
 
 
 class DeliveryTests(unittest.TestCase):
@@ -109,6 +104,17 @@ class DeliveryTests(unittest.TestCase):
             restarted.create_or_get_delivery(replace(data, destination_address='Elsewhere'))
         self.assertEqual(1, len(self.ops.view()['deliveries']))
 
+    def test_existing_allocation_without_phase_remains_readable(self):
+        job = self.delivery()
+        allocation = self.ops.allocate(job, self.one.staff_id)
+        with self.repo.transaction() as db:
+            payload = json.loads(db.execute('SELECT payload FROM allocations WHERE id = ?',
+                                            (allocation.allocation_id,)).fetchone()[0])
+            payload.pop('phase')
+            db.execute('UPDATE allocations SET payload = ? WHERE id = ?',
+                       (json.dumps(payload), allocation.allocation_id))
+        self.assertEqual('Whole job', self.ops.view()['allocations'][0]['phase'])
+
     def test_retry_after_norin_save_failure(self):
         quote = self.quote()
         with patch.object(self.app.repository, 'commit', side_effect=StorageError('disk full')):
@@ -147,21 +153,43 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual('Awaiting allocation', self.ops.view()['deliveries'][0]['state'])
         self.assertFalse(self.ops.view()['allocations'][0]['current'])
 
-    def test_overnight_delivery_allocation_and_schedule_change(self):
+    def test_pickup_and_delivery_can_use_different_staff(self):
         request = self.app.create_request(self.customer.customer_id, 'Melbourne',
                                           'Hawthorn', ['Books'])
         self.app.submit_request(request.request_id)
         quote = self.app.create_quote(request.request_id, '45.50',
                                       '2026-10-29 16:00', '2026-10-30 18:00')
         job = self.app.decide_quote(quote.quote_id, True).delivery_id
-        shifts = [('Thursday', '07:00', '23:00'), ('Friday', '07:00', '23:00')]
-        self.ops.set_availability(self.one.staff_id, shifts)
+        self.ops.set_availability(self.one.staff_id, [('Thursday', '07:00', '23:00')])
+        self.ops.set_availability(self.two.staff_id, [('Friday', '07:00', '23:00')])
         self.assertIn(self.one.staff_id, [s.staff_id for s in self.ops.candidates(job)])
         self.ops.allocate(job, self.one.staff_id)
         self.assertEqual('Allocated', self.ops.view()['deliveries'][0]['state'])
-        self.ops.set_availability(self.one.staff_id, shifts[:1])
-        self.assertEqual('Awaiting allocation', self.ops.view()['deliveries'][0]['state'])
+        self.ops.pickup(job)
+        self.assertEqual('Awaiting delivery assignment', self.ops.view()['deliveries'][0]['state'])
+        self.assertEqual([], [a for a in self.ops.view()['allocations'] if a['current']])
         with self.assertRaises(DomainError):
+            self.ops.allocate(job, self.one.staff_id)
+        self.ops.allocate(job, self.two.staff_id)
+        view = self.ops.view()
+        self.assertEqual('In transit', view['deliveries'][0]['state'])
+        self.assertEqual(['Pickup', 'Delivery'], [a['phase'] for a in view['allocations']])
+        self.assertEqual('Pickup completed', view['allocations'][0]['end_reason'])
+        self.ops.collect_payment(job, '45.50')
+        self.ops.complete(job)
+        self.assertEqual('Completed', self.ops.view()['deliveries'][0]['state'])
+
+    def test_pickup_before_shift_starts_is_not_eligible(self):
+        request = self.app.create_request(self.customer.customer_id, 'Melbourne',
+                                          'Hawthorn', ['Books'])
+        self.app.submit_request(request.request_id)
+        quote = self.app.create_quote(request.request_id, '45.50',
+                                      '2026-10-28 05:57', '2026-11-01 05:57')
+        job = self.app.decide_quote(quote.quote_id, True).delivery_id
+        self.ops.set_availability(self.one.staff_id,
+                                  [('Wednesday', '07:00', '23:00')])
+        self.assertEqual([], self.ops.candidates(job))
+        with self.assertRaisesRegex(DomainError, '05:57 AM'):
             self.ops.allocate(job, self.one.staff_id)
 
     def test_invalid_availability_does_not_release_assignment(self):
@@ -177,12 +205,15 @@ class DeliveryTests(unittest.TestCase):
         with self.assertRaises(DomainError):
             self.ops.complete(job)
         self.ops.pickup(job)
+        self.assertEqual('Awaiting delivery assignment', self.ops.view()['deliveries'][0]['state'])
+        with self.assertRaises(DomainError):
+            self.ops.collect_payment(job, '45.50')
+        self.ops.allocate(job, self.one.staff_id)
         with self.assertRaises(DomainError):
             self.ops.set_availability(self.one.staff_id, [])
         with self.assertRaises(DomainError):
             self.ops.set_active(self.one.staff_id, False)
-        with self.assertRaises(DomainError):
-            self.ops.allocate(job, self.two.staff_id, 'Too late')
+        self.ops.allocate(job, self.two.staff_id, 'Delivery reassigned')
         with self.assertRaises(DomainError):
             self.ops.collect_payment(job, '44.00')
         self.assertEqual([], self.ops.view()['payments'])
@@ -192,7 +223,7 @@ class DeliveryTests(unittest.TestCase):
         view = restarted.view()
         self.assertEqual('Completed', view['deliveries'][0]['state'])
         self.assertEqual(1, len(view['payments']))
-        self.assertFalse(view['allocations'][0]['current'])
+        self.assertFalse(any(a['current'] for a in view['allocations']))
 
     def test_customer_and_other_driver_permissions(self):
         job = self.delivery()
@@ -270,7 +301,13 @@ class IntegratedHttpTests(unittest.TestCase):
                 post('/api/delivery/allocate', delivery_id=delivery_id, staff_id=staff_id)
                 post('/api/logout')
                 post('/api/login', username='driver', password=PASSWORD)
-                post('/api/delivery/pickup', delivery_id=delivery_id)
+                state = post('/api/delivery/pickup', delivery_id=delivery_id)
+                self.assertEqual('Awaiting delivery assignment', state['deliveries'][0]['state'])
+                post('/api/logout')
+                post('/api/login', username='manager', password=PASSWORD)
+                post('/api/delivery/allocate', delivery_id=delivery_id, staff_id=staff_id)
+                post('/api/logout')
+                post('/api/login', username='driver', password=PASSWORD)
                 post('/api/delivery/payment', delivery_id=delivery_id, amount='45.50')
                 state = post('/api/delivery/complete', delivery_id=delivery_id)
                 self.assertEqual('Completed', state['deliveries'][0]['state'])

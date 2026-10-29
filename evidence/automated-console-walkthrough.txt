@@ -18,7 +18,7 @@ New username: norin
 Password (at least 8 characters): [hidden demo password]
 Confirm password: [hidden demo password]
 Create customer Norin Demo and account norin? [y/n]: y
-Registered CUS-89be3f122368. You may now sign in.
+Registered CUS-c417fbbf04e7. You may now sign in.
 
 1 Register customer | 2 Sign in | 0 Exit
 Choice: 2
@@ -38,19 +38,19 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 2
-1. Norin Demo | CUS-89be3f122368 | 0412345678
+1. Norin Demo | CUS-c417fbbf04e7 | 0412345678
 Choose record number, or /cancel: 1
 Pickup address (may be blank while drafting): 1 Swanston St, Melbourne
 Destination address (may be blank while drafting):
 Save draft for Norin Demo: 1 Swanston St, Melbourne -> ? [y/n]: y
-Draft saved: REQ-0cba00f2cd61. Use Edit draft to add parcels.
+Draft saved: REQ-74ce8a2a5b20. Use Edit draft to add parcels.
 
 norin - Customer
 1 Requests | 2 New draft | 3 Edit draft | 4 Quotes
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 3
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> (empty destination)
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> (empty destination)
 Choose record number, or /cancel: 1
 1 Locations | 2 Add parcel | 3 Edit parcel | 4 Remove parcel | 5 Validate
 Action: 5
@@ -61,7 +61,7 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 3
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> (empty destination)
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> (empty destination)
 Choose record number, or /cancel: 1
 1 Locations | 2 Add parcel | 3 Edit parcel | 4 Remove parcel | 5 Validate
 Action: 1
@@ -74,7 +74,7 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 3
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 1 Locations | 2 Add parcel | 3 Edit parcel | 4 Remove parcel | 5 Validate
 Action: 2
@@ -86,7 +86,7 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 3
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 1 Locations | 2 Add parcel | 3 Edit parcel | 4 Remove parcel | 5 Validate
 Action: 2
@@ -98,7 +98,7 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 3
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 1 Locations | 2 Add parcel | 3 Edit parcel | 4 Remove parcel | 5 Validate
 Action: 2
@@ -110,12 +110,12 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 3
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 1 Locations | 2 Add parcel | 3 Edit parcel | 4 Remove parcel | 5 Validate
 Action: 3
-1. PAR-aaa002ed620c: Books
-2. PAR-94380e7d85ce: Clothes
+1. PAR-3d8e227ba025: Books
+2. PAR-e766c7c41d5b: Clothes
 Choose record number, or /cancel: 2
 New parcel description: Clothes - fragile
 Draft updated and saved.
@@ -125,12 +125,12 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 3
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 1 Locations | 2 Add parcel | 3 Edit parcel | 4 Remove parcel | 5 Validate
 Action: 4
-1. PAR-aaa002ed620c: Books
-2. PAR-94380e7d85ce: Clothes - fragile
+1. PAR-3d8e227ba025: Books
+2. PAR-e766c7c41d5b: Clothes - fragile
 Choose record number, or /cancel: 2
 Remove this parcel from the draft? [y/n]: y
 Draft updated and saved.
@@ -140,9 +140,9 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 1
-REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
-  Customer: CUS-89be3f122368
-  PAR-aaa002ed620c: Books
+REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+  Customer: CUS-c417fbbf04e7
+  PAR-3d8e227ba025: Books
   Request information complete.
 
 norin - Customer
@@ -150,7 +150,7 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 11
-1. REQ-0cba00f2cd61 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Draft | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 Submit this request for a quote? It can no longer be edited. [y/n]: y
 Request submitted. Office staff can now prepare a quote.
@@ -174,7 +174,7 @@ manager - Manager
 7 Add phone customer | 8 Prepare quote
 9 Register staff account | 10 Deactivate account
 Choice: 8
-1. REQ-0cba00f2cd61 | Submitted | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Submitted | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 Quoted cost in AUD (e.g. 45.50): 0
 Estimated pickup YYYY-MM-DD HH:MM (Melbourne local): 2026-11-01 09:00
@@ -189,13 +189,13 @@ manager - Manager
 7 Add phone customer | 8 Prepare quote
 9 Register staff account | 10 Deactivate account
 Choice: 8
-1. REQ-0cba00f2cd61 | Submitted | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
+1. REQ-74ce8a2a5b20 | Submitted | 1 Swanston St, Melbourne -> 2 Glenferrie Rd, Hawthorn
 Choose record number, or /cancel: 1
 Quoted cost in AUD (e.g. 45.50): 45.50
 Estimated pickup YYYY-MM-DD HH:MM (Melbourne local): 2026-11-01 09:00
 Estimated delivery YYYY-MM-DD HH:MM (Melbourne local): 2026-11-01 11:00
 Issue AUD 45.50 quote for this submitted request? [y/n]: y
-Quote saved: QUO-f032c00488b3. Awaiting customer's decision.
+Quote saved: QUO-0b787aace106. Awaiting customer's decision.
 
 manager - Manager
 1 Requests | 2 New draft | 3 Edit draft | 4 Quotes
@@ -216,25 +216,25 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 4
-QUO-f032c00488b3 | REQ-0cba00f2cd61 | AUD 45.50 | Pending
+QUO-0b787aace106 | REQ-74ce8a2a5b20 | AUD 45.50 | Pending
   Pickup: 2026-11-01 09:00
   Delivery: 2026-11-01 11:00
   Estimates use Melbourne local time.
-  Prepared by: ACC-6c750c3cbd1d at 2026-10-27T18:48:07.672161+00:00
+  Prepared by: ACC-31374543c549 at 2026-10-27T19:06:27.427965+00:00
 
 norin - Customer
 1 Requests | 2 New draft | 3 Edit draft | 4 Quotes
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 5
-1. QUO-f032c00488b3 | REQ-0cba00f2cd61 | AUD 45.50 | Pending
+1. QUO-0b787aace106 | REQ-74ce8a2a5b20 | AUD 45.50 | Pending
 Choose record number, or /cancel: 1
-Decision belongs to Norin Demo (CUS-89be3f122368).
+Decision belongs to Norin Demo (CUS-c417fbbf04e7).
 Pickup: 2026-11-01 09:00:00; delivery: 2026-11-01 11:00:00
 Enter accept or reject: accept
 Record accept for this customer's quote? [y/n]: y
 Quote Accepted; decision saved.
-Delivery reference: DEMO-DEL-QUO-f032c00488b3
+Delivery reference: DEMO-DEL-QUO-0b787aace106
 DEMO handoff only; no actual delivery job was created.
 
 norin - Customer
@@ -242,14 +242,14 @@ norin - Customer
 5 Accept/reject quote | 6 Contact details | 0 Sign out
 11 Submit request for quote
 Choice: 5
-1. QUO-f032c00488b3 | REQ-0cba00f2cd61 | AUD 45.50 | Accepted
+1. QUO-0b787aace106 | REQ-74ce8a2a5b20 | AUD 45.50 | Accepted
 Choose record number, or /cancel: 1
-Decision belongs to Norin Demo (CUS-89be3f122368).
+Decision belongs to Norin Demo (CUS-c417fbbf04e7).
 Pickup: 2026-11-01 09:00:00; delivery: 2026-11-01 11:00:00
 Enter accept or reject: accept
 Record accept for this customer's quote? [y/n]: y
 Quote Accepted; decision saved.
-Delivery reference: DEMO-DEL-QUO-f032c00488b3
+Delivery reference: DEMO-DEL-QUO-0b787aace106
 DEMO handoff only; no actual delivery job was created.
 
 norin - Customer

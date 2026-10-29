@@ -1,19 +1,20 @@
-Verified at 2026-10-27T18:48:06.994668+00:00
+Verified at 2026-10-27T19:06:26.730285+00:00
 Python 3.11.16 on Windows-10-10.0.26300-SP0
 compileall: PASS (Python bytecode compilation)
 test_availability_change_releases_and_no_candidate_remains_unallocated (test_mekno.DeliveryTests.test_availability_change_releases_and_no_candidate_remains_unallocated) ... ok
 test_conflicts_adjacent_jobs_and_reassignment_history (test_mekno.DeliveryTests.test_conflicts_adjacent_jobs_and_reassignment_history) ... ok
 test_customer_and_other_driver_permissions (test_mekno.DeliveryTests.test_customer_and_other_driver_permissions) ... ok
+test_existing_allocation_without_phase_remains_readable (test_mekno.DeliveryTests.test_existing_allocation_without_phase_remains_readable) ... ok
 test_invalid_availability_does_not_release_assignment (test_mekno.DeliveryTests.test_invalid_availability_does_not_release_assignment) ... ok
-test_overnight_delivery_allocation_and_schedule_change (test_mekno.DeliveryTests.test_overnight_delivery_allocation_and_schedule_change) ... ok
+test_pickup_and_delivery_can_use_different_staff (test_mekno.DeliveryTests.test_pickup_and_delivery_can_use_different_staff) ... ok
+test_pickup_before_shift_starts_is_not_eligible (test_mekno.DeliveryTests.test_pickup_before_shift_starts_is_not_eligible) ... ok
 test_pickup_payment_completion_and_restarting (test_mekno.DeliveryTests.test_pickup_payment_completion_and_restarting) ... ok
 test_real_handoff_restart_and_conflicting_terms (test_mekno.DeliveryTests.test_real_handoff_restart_and_conflicting_terms) ... ok
 test_retry_after_norin_save_failure (test_mekno.DeliveryTests.test_retry_after_norin_save_failure) ... ok
 test_sql_transaction_rolls_back_reassignment_failure (test_mekno.DeliveryTests.test_sql_transaction_rolls_back_reassignment_failure) ... ok
 test_browser_workflow_and_staff_validation (test_mekno.IntegratedHttpTests.test_browser_workflow_and_staff_validation) ... ok
-test_delivery_across_days_pauses_outside_working_hours (test_mekno.WeeklyAvailabilityTests.test_delivery_across_days_pauses_outside_working_hours) ... ok
-test_delivery_across_days_requires_each_service_day (test_mekno.WeeklyAvailabilityTests.test_delivery_across_days_requires_each_service_day) ... ok
 test_old_dated_schedule_remains_readable_until_replaced (test_mekno.WeeklyAvailabilityTests.test_old_dated_schedule_remains_readable_until_replaced) ... ok
+test_pickup_and_delivery_availability_are_separate (test_mekno.WeeklyAvailabilityTests.test_pickup_and_delivery_availability_are_separate) ... ok
 test_weekly_hours_reject_overlaps_and_duplicate_days (test_mekno.WeeklyAvailabilityTests.test_weekly_hours_reject_overlaps_and_duplicate_days) ... ok
 test_weekly_hours_repeat_and_join_across_midnight (test_mekno.WeeklyAvailabilityTests.test_weekly_hours_repeat_and_join_across_midnight) ... ok
 test_acceptance_is_idempotent_even_after_restart (test_module.ModuleTests.test_acceptance_is_idempotent_even_after_restart) ... ok
@@ -64,7 +65,7 @@ test_registration_and_browser_sessions_are_isolated (test_web.WebTests.test_regi
 test_whole_request_form_saves_atomically_and_preserves_parcel_ids (test_web.WebTests.test_whole_request_form_saves_atomically_and_preserves_parcel_ids) ... ok
 
 ----------------------------------------------------------------------
-Ran 61 tests in 27.480s
+Ran 62 tests in 29.785s
 
 OK
 

@@ -1,6 +1,7 @@
 """Authorised use cases and Norin's persistent, idempotent delivery gateway."""
 import json
 from dataclasses import asdict, replace
+from datetime import datetime
 from norin_delivery.models import DomainError, Role, new_id, now_text, required
 from tola_payment import Payment
 from .models import Delivery, DeliveryStaff, AvailabilitySchedule, StaffAllocation, period
@@ -108,8 +109,17 @@ class DeliveryOperations:
             allocation, ended_at=now_text(), end_reason=reason))
         delivery = self.repository.get(db, 'deliveries', allocation.delivery_id)
         self.repository.save(db, 'deliveries', replace(
-            delivery, current_allocation_id=None, state='Awaiting allocation'))
+            delivery, current_allocation_id=None,
+            state='Awaiting delivery assignment' if delivery.picked_up_at else 'Awaiting allocation'))
         self.event(db, delivery.delivery_id, 'Allocation released', actor.account_id, reason)
+
+    @staticmethod
+    def _covers_allocation(schedule, allocation):
+        if allocation.phase == 'Pickup':
+            return schedule.available_at(allocation.start)
+        if allocation.phase == 'Delivery':
+            return schedule.available_at(allocation.end, delivery=True)
+        return schedule.covers(allocation.start, allocation.end)
 
     def set_availability(self, staff_id, periods):
         actor = self.staff_access(staff_id)
@@ -117,7 +127,7 @@ class DeliveryOperations:
         with self.repository.transaction() as db:
             self.repository.get(db, 'staff', staff_id)
             affected = [a for a in self.repository.all(db, 'allocations')
-                        if a.current and a.staff_id == staff_id and not schedule.covers_delivery(a.start, a.end)]
+                        if a.current and a.staff_id == staff_id and not self._covers_allocation(schedule, a)]
             # Validate everything first: in-transit jobs cannot lose their assignment.
             for a in affected:
                 self.repository.get(db, 'deliveries', a.delivery_id).require_before_pickup()
@@ -143,27 +153,42 @@ class DeliveryOperations:
     def _eligible(self, db, delivery, staff_id):
         staff = self.repository.get(db, 'staff', staff_id)
         start, end = delivery.terms['estimated_pickup'], delivery.terms['estimated_delivery']
+        delivering = delivery.picked_up_at is not None
+        when = end if delivering else start
         schedule = self.repository.get(db, 'schedules', staff_id)
-        if not staff.eligible(schedule, start, end):
+        if not staff.eligible(schedule, when, delivery=delivering):
             return False
         return not any(a.staff_id == staff_id and a.delivery_id != delivery.delivery_id
-                       and a.conflicts(start, end)
+                       and a.conflicts_at(when)
                        for a in self.repository.all(db, 'allocations'))
 
     def candidates(self, delivery_id):
         self.office()
         with self.repository.transaction() as db:
             delivery = self.job(db, delivery_id)
-            delivery.require_before_pickup()
+            if delivery.state not in ('Awaiting allocation', 'Allocated',
+                                      'Awaiting delivery assignment', 'In transit'):
+                raise DomainError('This delivery is not ready for staff allocation.')
             return [s for s in self.repository.all(db, 'staff') if self._eligible(db, delivery, s.staff_id)]
 
     def allocate(self, delivery_id, staff_id, reason=''):
         actor = self.office()
         with self.repository.transaction() as db:
             delivery = self.job(db, delivery_id)
-            delivery.require_before_pickup()
+            if delivery.state not in ('Awaiting allocation', 'Allocated',
+                                      'Awaiting delivery assignment', 'In transit'):
+                raise DomainError('This delivery is not ready for staff allocation.')
             if not self._eligible(db, delivery, staff_id):
-                raise DomainError('Staff must be active, on shift on each delivery day, available at pickup and delivery, and free of conflicting jobs.')
+                staff = self.repository.get(db, 'staff', staff_id)
+                phase = 'delivery' if delivery.picked_up_at else 'pickup'
+                when = delivery.terms['estimated_delivery' if delivery.picked_up_at else 'estimated_pickup']
+                schedule = self.repository.get(db, 'schedules', staff_id)
+                if not staff.active:
+                    raise DomainError(f'{staff.display_name} is inactive.')
+                if not schedule.available_at(when, delivery=bool(delivery.picked_up_at)):
+                    shown = datetime.fromisoformat(when).strftime('%a %d %b, %I:%M %p')
+                    raise DomainError(f'{staff.display_name} is not on shift at the estimated {phase} time ({shown}).')
+                raise DomainError(f'{staff.display_name} has a conflicting job at the estimated {phase} time.')
             if delivery.current_allocation_id:
                 old = self.repository.get(db, 'allocations', delivery.current_allocation_id)
                 if old.staff_id == staff_id:
@@ -171,10 +196,11 @@ class DeliveryOperations:
                 self._release(db, old, actor, required(reason, 'Reassignment reason'))
             allocation = StaffAllocation(new_id('ALC'), delivery_id, staff_id,
                 delivery.terms['estimated_pickup'], delivery.terms['estimated_delivery'],
-                actor.account_id, now_text())
+                actor.account_id, now_text(), phase='Delivery' if delivery.picked_up_at else 'Pickup')
             self.repository.save(db, 'allocations', allocation)
             self.repository.save(db, 'deliveries', replace(delivery,
-                state='Allocated', current_allocation_id=allocation.allocation_id))
+                state='In transit' if delivery.picked_up_at else 'Allocated',
+                current_allocation_id=allocation.allocation_id))
             self.event(db, delivery_id, 'Allocated', actor.account_id, staff_id)
         return allocation
 
@@ -205,7 +231,12 @@ class DeliveryOperations:
             actor = self._operator(db, delivery)
             if delivery.state != 'Allocated':
                 raise DomainError('Only an allocated delivery can be picked up.')
-            self.repository.save(db, 'deliveries', replace(delivery, state='In transit', picked_up_at=now_text()))
+            allocation = self.repository.get(db, 'allocations', delivery.current_allocation_id)
+            self.repository.save(db, 'allocations', replace(allocation,
+                ended_at=now_text(), end_reason='Pickup completed'))
+            self.repository.save(db, 'deliveries', replace(delivery,
+                state='Awaiting delivery assignment', current_allocation_id=None,
+                picked_up_at=now_text()))
             self.event(db, delivery_id, 'Picked up', actor.account_id)
 
     def collect_payment(self, delivery_id, amount):
